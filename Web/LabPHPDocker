@@ -1,0 +1,11 @@
+Wa analyse the php code
+As we can see if we call the ?msg variable followed by a string we echo it
+?msg=hello prints hello as it is sending a get request
+We want to send a POST request to execute the system call. To do so we click on our request and then right click > Open/Resend with Request Editor
+To do so we change the Method to POST and need to paste "Content-Type: application/x-www-form-urlencoded" in the request header
+We get "Content-Type: application/x-www-form-urlencoded" from 
+$curl -v -X POST http://servertcm:8000 -d "cmd=whoami"
+OR directly convert ?msg=hello request into a POST request and modify the body
+
+Finally in the request body we add:
+cmd=ls

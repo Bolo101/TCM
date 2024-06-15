@@ -1,0 +1,14 @@
+Broken access control is when users can see or do more than they are supposed to.
+It happends when there is too much trust in the server or the client side. Let's say an application uses an ID number for a user profil in a URL and you can change that number in the URL to get data from another profile
+
+Weak authorization : application fails to  protect sensitive content. Ex:Protecting admin page using a readable cookie
+
+Security through obscurity:
+Does not exist
+
+DEMO on dvwa
+Go to File Inclusion. We see that the server is reading pages, we try to read /etc/passwd to get usernames. Right click > New Alert> Information = High, Confidence = confirmed
+When we set security = high we can no longer access the file
+By viewing the source code weunderstand that we are going to be prompted an error message if the input after $page= does not contain 'file'. 
+For this reason we give file and then redirect to the / using /../.. multiple times until we reach /etc/passwd
+$http://servertcm:8001/vulnerabilities/fi/?page=file/../../../../../../etc/passwd

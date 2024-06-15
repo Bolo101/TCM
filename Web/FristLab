@@ -1,0 +1,10 @@
+Zap Lab
+When we cat the run.sh command in the 2-10zap folder we analyse the command
+$-d enables the daemon so the process runs in the bachground
+$-v is to mount the volume where the nginx web server host its web content from (/usr/share/nginx/html)
+
+Once our website is up we browse our website and create a new Context with the site on Zaproxy, meaning that we are focusing on that target
+We execute a spider attack on it to list all the pages logically linked to our website. However some pages may no be expressly linked to a page but still present on the web server. For this reason we need to fuzz the website.
+To do so we go on a know .html output found during the spider attack, we highligth the work preceding the extension in the request then right click > Fuzz
+On the fuzzer we add a payload from 'File' and browse to Seclist repo
+Final step is to sort the code output by clicking on the head cell "Code"

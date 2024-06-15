@@ -1,0 +1,22 @@
+Application architecture that presents attack opportunities
+
+CSRF is when a website is able to accept form request or http request that send data from the sote to offsite. 
+
+LOW
+We can see when we change the password that the password is in clear in the URL We can see the get request in the URL.
+When we open a new tab and close the current one. The session is still active. We can get back the URL and change the password_new and password_conf fields before entering
+
+MEDIUM
+We cannot change the password from the URL replayed in a new tab
+By viewing the source code we see a chack between the http referer (header) and the server
+On zap proxy we can see the two requests. The one made from the page and the web made from the tab. We see that the get request from the tab is lacking the referer section indicating where the request is coming from.
+To bypass this we copy the second password request (http://servertcm:8001/vulnerabilities/csrf/?password_new=password&password_conf=password&Change=Change), paste it in a new tab, activate breakpoints (green orb on top of 'Requester'). This way we can copy and paste the 'Referer' line from our first request in our second request (Referer: http://servertcm:8001/vulnerabilities/csrf/) and click on the forward button next to the orb
+In the response we got a 200 OK
+
+HIGH
+a user token is added to the URL. Every time the page is reload the token is renewed and different
+
+We want to embed the password fields into an iframe in a webpage we control to load the take and exploit it
+1) Create an index.html
+Deploy it in a web browser. We have to authentificate
+From a console we can use javascript in the cross site scripting section to display the html document of the site, get the user token value and use it in our CSRF section. We can automate in a index.js file

@@ -1,0 +1,44 @@
+Reconnaissance
+
+Passive reconnaissance
+  OSINT on social aspect, names, pictures, job title
+
+Target validation to avoid attacking the wrong person/people
+Identifying our target (for the course we can use www.bugcrowd.com to find legit entities to attack/ perform reconnaissance)
+
+Discovering Email Addresses:
+  hunter.io : free limited access
+  voilanorbert.com
+  phonebook.cz
+  tools.verifyemailaddress.io
+
+Breached credentials:
+    DeHashed: non free service but can be paid for a week, a month, a year
+    using mail, ip, username, addres, phone
+    even gives hash password: then go to hashes.org
+
+Hunting subdomains:
+  sublist3r: VirusTotal issue while testing the tool. Need to investigate
+  crt.sh:on a web browser. 
+  owasp amass
+  tomnomnom httprobe: your enter a subdomain and it return whether it is alive or net
+
+Identifying website technologies
+  builtwith.com
+  Wappalyzer add-on
+  $whatweb in your terminal  
+
+Burpsuite proxy (proxy means it can intercept traffic for us)
+  Intercept traffic. Set intercept on in Proxy section. Need to configure your web browser, use Foxy Proxy as example and 
+  import burp certificate into your browser
+  Active scanning available in premium account
+Set up by using FoxyProxy on port 8080 for 127.0.0.1
+Once proxy activated browse https://burp to download the certificate and add it in the web browse settings
+
+Googling
+  Look for a specific site: $site:your_site
+  Exclude result containing a specific pattern: $site:your_site -pattern1 -pattern2
+  Filter filetape: $filetype:pdf (xlxs, csv,odt)
+
+Social media  
+

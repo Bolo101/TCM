@@ -1,0 +1,9 @@
+Abusing user input fiels that run local commands on the server
+
+Low security:
+we enter our ip address and get a ping
+From the terminal we can execute multiple commands by separating them with a ; . Each command is executed once the previous is complete
+$192.168.1.48;ls -la
+
+We can also modify the web request from the Zap history to replay it after adding commands
+In history we select our replayed ping, and adda 'New Alert'. It is an OS commanding, High risk and Confirmed Confidence

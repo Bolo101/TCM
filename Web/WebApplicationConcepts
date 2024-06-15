@@ -1,0 +1,76 @@
+Server : machine and software that provide information to clients
+Data are provided over HTTP
+Client : anything that can make HTPP requests
+
+Nginx and server logs
+First we need create a server that will accept HTTP request, we are going the user the Nginx server image from docker
+$docker image pull nginx
+To run automatically remove the container after use add --rm and redirect all the coming http traffic from port 80 to port 80 on our nginx web server
+$docker container run --rm -p 80:80 nginx
+Warning : not running in a daemonized mode
+
+On the kali side we are making a request using curl
+$curl http://servertcm or IP address
+or 
+$nc servertcm 80
+or use web browser
+
+HTTP
+Protocol that defines how web traffic is structured 
+Methods:
+GET : ask the server to give information
+POST : send data to the server (adding a comment, logging into your account)
+PUT and PATCH : represent updates to exising data
+DELETE : delete a resource
+HEAD and OPTIONS : metadata request to the server (its capacities)
+
+Every request response has a response code
+200:success
+300 : redirect
+400 : failed access
+500 : error
+Responses can have a body (json, binary data)
+
+Use -v when using curl to get more info such as IP address and connection data such as encryption details for https
+Add -L to curl to follow redirection. If you curl an hhtp site with a https redirection the -L follows that redirection
+$curl -L -v http://site
+$curl -v https://site
+
+If we want to send a POST request
+$curl -X POST -v https://site
+Can use a custom header
+$curl -X POST https://site -H "User-Agent : PWST" //change user-agent
+
+Zaproxy
+Setting up:
+-On brave create new profile
+-Add Proxy SwitchyOmega from google web store
+-Add Wappalyzer the same way
+
+Then we configure switchyproxy:
+-First we go in the profile section to change the "proxy" profile name to "ZAP"
+-In the ZAP profile we enter "localhost" in the server box and keep the port 8080
+-Do not forget to click on "Apply Changes"
+
+Next step is to launch zaproxy
+An add-ons windows opens, we need to update all by clicking at the bottom of the page. May need to resize the window
+Switch on the web browser to ZAP profile on Switchy Proxy
+We need to set the zap certificate in the browser
+-Click on option gear
+-Scroll to dynamic ssl certificate or Network > Server Certificates
+-Save it and dowload it in the browser in the security section > Authorities
+
+By starting an automatic attack, using the spider (enables the enumeration of the links of the site), we can add a context to the site using rigth click > Include in Context > New Context > OK. Once done we can select the outputs and study the requests and responses.
+
+We can now download a few add-ons on the marketplace (red,blue and green cubes)
+Then we click on the option gear > Global Exclude URL to add brave in exclude url following the syntax given for other sites:
+^https?://.*\.brave\.com.*$
+
+We disable HUD
+
+Next section: option gear > Global Alert Filters
+Add anti-clickjacking header on low risk
+
+
+
+

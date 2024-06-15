@@ -1,0 +1,5 @@
+iDefault accounts
+Missing hardening
+Unnecessary features
+Ex: XXE for XML external entities
+XL can define its own tags 
