@@ -85,4 +85,31 @@ Let's we got a file containing several files names.
 $ls -l 'cat register-file.txt' //register-file contains the files' names contained in the directory
 
 # Searching and processing text
+## grep 
+$grep bo wordlist.txt // look for bobo in the texte file wordlist.txt
+
+We can print result that does not contain the letter e
+$grep -v e wordlist.txt
+
+Can display the lines before the matching line using -A and the lin after using -B
+$grep error -A 3 wordlist.txt
+
+## sort 
+Used to sort in alphabetical order
+
+Can sort number in decremental order
+$sort -nr numbers.txt
+
+## uniq
+sort and remove adjacent duplicates
+
+We need to sort first and then pipe with uniq to remove adjacent duplicates
+
+$sort file.txt | uniq 
+
+## wc 
+print the number of lines, words and bytes in a file
+$grep bob wordlist.txt | wc
+
+
 
