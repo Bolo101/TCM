@@ -111,5 +111,21 @@ $sort file.txt | uniq
 print the number of lines, words and bytes in a file
 $grep bob wordlist.txt | wc
 
+# Manipulating text
+## sed 
+Manipulates text as it flows by.
+
+### text substitution
+$sed 's/Suite/Ste/' text.txt //substitute the word Suite by Ste in the file file text.txt. Only change the first instance
+We need to add a global G to make it recursif
+$sed 's/Suite/Ste/g' text.txt
+
+We can also target specific accurence
+$sed '$s/Suite/Ste/'
+
+Delete line when pattern is found
+$sed 'Suite/d' text.txt
+
+
 
 
