@@ -85,7 +85,7 @@ Let's we got a file containing several files names.
 $ls -l 'cat register-file.txt' //register-file contains the files' names contained in the directory
 
 # Searching and processing text
-## grep 
+## grep
 $grep bo wordlist.txt // look for bobo in the texte file wordlist.txt
 
 We can print result that does not contain the letter e
@@ -94,7 +94,7 @@ $grep -v e wordlist.txt
 Can display the lines before the matching line using -A and the lin after using -B
 $grep error -A 3 wordlist.txt
 
-## sort 
+## sort
 Used to sort in alphabetical order
 
 Can sort number in decremental order
@@ -107,12 +107,12 @@ We need to sort first and then pipe with uniq to remove adjacent duplicates
 
 $sort file.txt | uniq 
 
-## wc 
+## wci
 print the number of lines, words and bytes in a file
 $grep bob wordlist.txt | wc
 
 # Manipulating text
-## sed 
+## sedi
 Manipulates text as it flows by.
 
 ### text substitution
@@ -120,12 +120,47 @@ $sed 's/Suite/Ste/' text.txt //substitute the word Suite by Ste in the file file
 We need to add a global G to make it recursif
 $sed 's/Suite/Ste/g' text.txt
 
-We can also target specific accurence
+We can also target specific occurence
 $sed '$s/Suite/Ste/'
 
 Delete line when pattern is found
 $sed 'Suite/d' text.txt
 
+Find mathcing pattern in a line and modify targeted word
+$seg '/ee s/Suite/Ste/g' sample.txt    // change Suite to Ste in line where ee is found in a word
+
+$ sign is used to target the end of line and \n to jump a line
+
+## awk
+$echo linux bob sally | awk '{print $2}' // prints bob
+$echo linux bob sally | awk '{print $3, "likes", $1}'
+
+By default awk use the " " as a delimeter but we can specify a new delimeter using -F
+$awk -F ',' 'print{$1}' sample.txt
+
+## tr
+Used to change patterns
+$cat sample.txt |tr ',' '\t' // change all , into a tab space
+
+$cat sample.txt | tr 'a-z' 'A-Z' //change lowercase to uppercase
+
+# Networking
+Perform DNS lookup on a domain name
+$dig google.com
+$nslookup google.com 
+
+Reverse DNS to obtain domain name based on IP address
+$dig -x 8.8.8.8
+
+See all TCP connections
+$netstat -at
+
+See listening TCP ports
+$netstat -lt // after launching a http server using $ python -m http.server
+
+# File transfert utilities
+## scp
+$scp file ip:/home/bob // if file is a directory add -r for recursivity
 
 
 
