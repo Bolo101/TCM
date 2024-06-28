@@ -160,7 +160,13 @@ $netstat -lt // after launching a http server using $ python -m http.server
 
 # File transfert utilities
 ## scp
-$scp file ip:/home/bob // if file is a directory add -r for recursivity
+$scp file username@ip:/home/bob // if file is a directory add -r for recursivity
+username is not necessary to provide if the username is the same as the one sending the files
 
-
+## rsync 
+Better to copy several files on the network
+It computes the difference between source file and destination file to only transfer missing files or modified files
+$rsync -avzh file.txt 192.168.1.12:/home/bolo 
+-a is for archive mode. Ti enables to transfer directories recursively and preserve user permissions and ownership
+-z is for compression
 
