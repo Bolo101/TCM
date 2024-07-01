@@ -200,4 +200,21 @@ dos2unix temp.txt
 use lowercase n to go to next match. Uppercase N to go to previous match
 
 # Process management
+## Monitor running processes
+### ps
+$ps -ax | less -S //S enables to chope output wider than the screen size
+The previous command displaysthe processes for all users using the BSD syntax
+
+$ps -e | less -S // processes for users using the Unix syntax
+$ps aux |less -S // for BSD format
+$ps -ef | less -S //for Unix format
+
+First column display the user ID, second is process ID, third column is parent ID
+TTY indicates the terminal used to control the process. ? means not associated terminal
+
+## Display process hierarchy:
+$pstree | less -S 
+
+## Monitor used ressources linked to running process
+$top
 
