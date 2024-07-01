@@ -170,3 +170,34 @@ $rsync -avzh file.txt 192.168.1.12:/home/bolo
 -a is for archive mode. Ti enables to transfer directories recursively and preserve user permissions and ownership
 -z is for compression
 
+# COnverting files
+DOS uses  Control Line Feed for line termination
+MACOS uses Control for line termination 
+Linux uses the normal line termination for Linux which is a line feed
+
+We can see thse details using the file command
+When opening a file with vim we can read the linux line termination of linux files using:
+In normal mode :
+:e ++ff=unix
+
+We can convert files using commands 
+## Unix -> Windows format:
+cp file1.txt temp.txt
+$unix2dos temp.txt
+We can use -n to create a new file with the changes 
+$unix2dos -n sample.txt newfile.txt
+
+## Unix -> MAC
+Can convert to MAC:
+$unix2dos -c mac temp.txt
+
+## Dos -> Unix
+dos2unix temp.txt 
+
+# Text editors (only vim nano is sh**)
+## Searching for letters
+/searchCharacter
+use lowercase n to go to next match. Uppercase N to go to previous match
+
+# Process management
+
