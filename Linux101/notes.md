@@ -218,3 +218,55 @@ $pstree | less -S
 ## Monitor used ressources linked to running process
 $top
 
+# Foreground and background processes
+
+## Suspend running process
+ctrl + D // process still exist but is not running
+Use bg command to move the task to the background
+
+## Move program from background to foreground
+Pause a process using ctrl + Z
+Process still exist but isn't running
+Can see it using the jobs command
+
+When can move the process to the background using bg
+When can move it back to the foreground using fg
+If we got several jobs, fg and bg will operate on the one marked by a + 
+To work on a different process we need to refer to the job value
+
+# Managing processes
+Different states
+Stopped / running / terminated / sleeping / zombie
+Sleeping is when a process is waiting for a resource
+Zombie process is when a process is not properly cleaned up when it dies
+
+Process state can be change using the kill command. Not only to terminate it
+$kill -l //get all usable signals
+
+To not use the PID process to kill it we can use the pkill command, no matter what specific process is running. It will kill all processes using the same name
+$pkill xeyes
+
+Pause process execution in the shell using sleep command
+$sleep 5 // add a 5 seconds sleep
+
+# Scheduling Processes with Crontab and init.d
+
+Two type of Cron tab file.
+The first is located in /etc and is used for maintenance of the entire system
+/etc/crontab
+/etc/cron.daily
+All schedules are associated to root as they are system-wide processes. Administrator might use/modify these schedules but not normal users
+
+For normal users who wants to create personal user's schedule we use :
+$crontab -e
+Lets' say we want to run a task at 1h05 on the second day of each month:
+5 1 2 * * touch /home/bob/cron/crontab-ran.txt
+
+If we want to run a task every five minutes we can use the following syntax:
+*/5 * * * * touch /home/bob/cron/crontab-ran.txt
+
+
+# Bash shell scripts
+#!/bin/bash // the linux kernel starts a new shell to execute the script
+user=$(whoami) //bash execute what is contained in the parentheses after the dollar sign and stores it into the user variable
+
