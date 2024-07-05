@@ -265,6 +265,18 @@ Lets' say we want to run a task at 1h05 on the second day of each month:
 If we want to run a task every five minutes we can use the following syntax:
 */5 * * * * touch /home/bob/cron/crontab-ran.txt
 
+To delete the added task we can use :
+$crontab -r 
+
+To list cron task schedule use:
+$crontab -l
+
+Cron is used to schedule task at a specific time. if we want a process to be run when system boots we use init.d located in /etc/init.d
+We can list rc directories in /etc using :
+$ls -d /etc/rc*.d
+When booting we are in rc5.d, it means a graphical logging. Servers boot using rc3.d, so without graphical logging.
+If we list rc5.d we notice every script starts with a S (service being started) or a K (service being stopped or killed) and followed by a number (the order it should be stared (1 = no order))
+
 
 # Bash shell scripts
 #!/bin/bash // the linux kernel starts a new shell to execute the script
