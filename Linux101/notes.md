@@ -112,7 +112,7 @@ print the number of lines, words and bytes in a file
 $grep bob wordlist.txt | wc
 
 # Manipulating text
-## sedi
+## sed
 Manipulates text as it flows by.
 
 ### text substitution
