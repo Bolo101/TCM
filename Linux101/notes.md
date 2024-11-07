@@ -133,29 +133,38 @@ $ sign is used to target the end of line and \n to jump a line
 
 ## awk
 $echo linux bob sally | awk '{print $2}' // prints bob
+
+
 $echo linux bob sally | awk '{print $3, "likes", $1}'
 
 By default awk use the " " as a delimeter but we can specify a new delimeter using -F
+
 $awk -F ',' 'print{$1}' sample.txt
 
 ## tr
 Used to change patterns
+
 $cat sample.txt |tr ',' '\t' // change all , into a tab space
 
 $cat sample.txt | tr 'a-z' 'A-Z' //change lowercase to uppercase
 
 # Networking
 Perform DNS lookup on a domain name
+
 $dig google.com
+
 $nslookup google.com 
 
 Reverse DNS to obtain domain name based on IP address
+
 $dig -x 8.8.8.8
 
 See all TCP connections
+
 $netstat -at
 
 See listening TCP ports
+
 $netstat -lt // after launching a http server using $ python -m http.server
 
 # File transfert utilities
