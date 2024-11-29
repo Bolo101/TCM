@@ -32,4 +32,8 @@ $sudo virsh start <machine_name>
 $sudo virsh domstate <machine_name> //check state of the vm
 $sudo virsh shutdown <machine_name>
 
- 
+Add user to docker group to avoid having to specify sudo usage:
+
+```bash
+sudo usermod -aG docker $(whoami)
+``` 
