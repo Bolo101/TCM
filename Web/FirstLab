@@ -1,4 +1,4 @@
-Zap Lab
+Zap Proxy Lab 
 When we cat the run.sh command in the 2-10zap folder we analyse the command
 $-d enables the daemon so the process runs in the bachground
 $-v is to mount the volume where the nginx web server host its web content from (/usr/share/nginx/html)
