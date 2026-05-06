@@ -1,8 +1,0 @@
-launch lab using docker compose up -d
-
-When we study the POST request to try logging in, we notice there is a user token also present in the GET response
-Make a request using admin username and a password, use that request to fuzz the password
-To prepare our following attack we need to make sure that zap is aware of this token. We click on the option gear > Anti-CRSF Tokens > add... and we give the name of the variable (here it is "user_token")
-In the fuzzer options we click the box "Redirects". In the history we see that the POST request return a 302 code meaning there is a redirection
-In message processor we also add a Tag Creator containing "failed", failed being the message returned if the password is incorrect
-=> Not results. In fact it is due to the number of threads, causing the user_token to change. So we need to slow things down and use a single thread to follow the sequence. We do again the same config for the fuzzing attack but in the fuzzer options we set 'Concurrent Scanning Threads per Scan' to 1
