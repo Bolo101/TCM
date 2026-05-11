@@ -1,3 +1,0 @@
-Client sides applications use the client's ressources to render the website rather that putting all the burden on the web servers
-Anything on the client side can't be secret
-Javascript is used to render the html. Can be hard for ZAP to get informations. We need toknow what we want to find
