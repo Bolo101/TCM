@@ -118,7 +118,7 @@ Now you have authenticated access to the web application, which uses PHP for pro
    - After upload, click “view” to see the image path (for example `/academy/uploads/yourfile.php`). This confirms where uploaded files are stored and that PHP may be executed there.
 
 2. Prepare a PHP reverse shell:
-   - Use a standard PHP reverse shell script (for example the classic `php-reverse-shell.php`).
+   - Use a standard PHP reverse shell script (for example the classic `php-reverse-shell.php` from pentestMonkey).
    - Edit it to set:
      - `$ip` to the attacker IP (`ATTACKER_IP`).
      - `$port` to the chosen listening port (for example `1234`).
