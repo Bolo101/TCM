@@ -149,4 +149,11 @@ In our running folder we now have a 'lootme' folder containing different informa
 
 Back to Kali, logging is also an event. We logging from a client machine as administrator
 During the logging mitm created a new user, credentials are in the terminal
-On the DC we check that the user is created, he is member of Domain Users so he does not have access to every single computer in the domain but have access to the Enterprise Admins group and have access to run secrets dump againt the domain, get hashes and manage to 
+On the DC we check that the user is created, he is member of Domain Users so he does not have access to every single computer in the domain but have access to the Enterprise Admins group and have access to run secrets dump againt the domain, get domain user's hashes
+
+## IPv6 Attack Defenses
+
+- Disable IPv6 internally, or block some traffic (inbound dynamic host configuration protocol for IPv6, inbound router advertisement, outbound dynamic host configuration protocol for IPv6)
+- If WPAD is not use internally, disable it via a GPO
+- Enbale LDAP signing and LDAP channel binding to avoid relaying to LDAP
+- Consider Administrative users to the Protected Users group or marking them as Account is sensitive so they cannot be delegated to avoid impersonation
