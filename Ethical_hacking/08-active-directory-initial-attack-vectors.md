@@ -157,3 +157,15 @@ On the DC we check that the user is created, he is member of Domain Users so he 
 - If WPAD is not use internally, disable it via a GPO
 - Enbale LDAP signing and LDAP channel binding to avoid relaying to LDAP
 - Consider Administrative users to the Protected Users group or marking them as Account is sensitive so they cannot be delegated to avoid impersonation
+
+## Passback Attacks
+
+[Printer hacking](https://www.mindpointgroup.com/blog/how-to-hack-through-a-pass-back-attack)
+
+## Initial Internal Attack Strategy
+
+- Begin with Responder and mitm6
+- Run scans to generate traffic (Nessus, Nmap)
+- If scans are taking too long, look for website (http_version on msfconsole)
+- Look for default credentials on web logins, printers,...
+- Think outside the box
