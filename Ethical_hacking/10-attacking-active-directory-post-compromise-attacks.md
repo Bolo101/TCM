@@ -64,3 +64,26 @@ cmedb
 help
 host //all host pulled in the network
 creds // all the creds we found and on what they work
+
+## Dumping and Cracking Hashes
+
+secretsdump.py MARVEL.local/fcastle:'Password1'@192.168.138.137
+We want SAM hashes, administrators and user account. No focus on default accounts
+
+Sometime we can have clear password if they are stored in registries or if using wdigest
+
+wdigest is an older protocol (Win7,8,Server2012). They patched it by disabling it.
+We can force wdigest activation and wait for a login to get clear password.
+
+Knowing we are admins on several machines thanks to crackmapexec we try dumping on all machines for additional hashes. if no access by password we can try using hash:
+secretsdump.py aministrator@192.168.138.138 -hashes NTLM_HASH
+
+LLMNR to get hash -> fcastle hash -> cracked -> sprayed the password -> found new login -> secretsdump those logins -> respray the network with local account
+And all we need to crack the hash is the NT portion of the hash, not the LM
+
+Crack NT hash: 
+- Determine hash type using hash-identifier from SAM dumped secrets
+- Find appropiate hashcat attack:
+hashcat --help | grep NTLM
+hashcat -m 1000 NT_HASH /usr/share/wordlists/rockyou.txt -O
+-O : Optimized if on bare-metal
