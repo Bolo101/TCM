@@ -95,3 +95,12 @@ hashcat -m 1000 NT_HASH /usr/share/wordlists/rockyou.txt -O
 - Limit administrators (least privilege)
 - Utilise strong password without common words (can use sentence)
 Set check-in and check-out on sensitive accounts when needed. Automatically rotate password on check in/out
+
+## Kerberoasting Overview
+
+This attack takes advantages of service attack
+We provide a TGT request to the DC to obtain access to an Application Server (provide NTLM hash).
+Once server answered we request a TGS for server.
+At step 4 we receive a TGS encrypted with server's account hash.
+Once we have a valid TGT from a compromised domain account, then we can request the TGS that is going to have the hash of service account.
+We can use GetUserSPNs.py to use our username and password, point to the domain controller that is our KDC and issue a request, gather the hash and crack it.
