@@ -87,3 +87,11 @@ Crack NT hash:
 hashcat --help | grep NTLM
 hashcat -m 1000 NT_HASH /usr/share/wordlists/rockyou.txt -O
 -O : Optimized if on bare-metal
+
+## Pass Attack Mitigation
+
+- Avoid re-using local admin password
+- Disable Guest and Administrators accounts
+- Limit administrators (least privilege)
+- Utilise strong password without common words (can use sentence)
+Set check-in and check-out on sensitive accounts when needed. Automatically rotate password on check in/out
