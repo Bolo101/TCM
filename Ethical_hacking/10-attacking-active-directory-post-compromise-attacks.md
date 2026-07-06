@@ -100,7 +100,10 @@ Set check-in and check-out on sensitive accounts when needed. Automatically rota
 
 This attack takes advantages of service attack
 We provide a TGT request to the DC to obtain access to an Application Server (provide NTLM hash).
-Once server answered we request a TGS for server.
-At step 4 we receive a TGS encrypted with server's account hash.
+Once server answered we request a TGS for server to the DC.
+At step 4 we receive a TGS encrypted with server's account hash from DC.
 Once we have a valid TGT from a compromised domain account, then we can request the TGS that is going to have the hash of service account.
 We can use GetUserSPNs.py to use our username and password, point to the domain controller that is our KDC and issue a request, gather the hash and crack it.
+
+## Kerberoasting Walkthrough
+
