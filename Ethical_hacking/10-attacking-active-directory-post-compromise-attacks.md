@@ -119,3 +119,22 @@ hashcat -m 13100 krb.txt /usr/share/wordlist/rockyou.txt
 - Do not run the service account as admin
 - Service account should have strong password
 - Do not mark password account in account description
+
+## Token Impersonation Overview
+
+A token is a temporary key that allow to access a system/network without having to provide credentials each time
+Two types :
+- Delegate : creating for logging
+- Impersonation : non-interactive such as attacking a network drive
+
+Within metasploit we can use module 'incognito' to impersonate token in meterpreter (admin must be logged to the machine):
+load incognito
+list_tokens -u
+impersonate_token marvel\\castle
+shell
+
+If we impersonate a domain admin token, we can manage to execute succesffullu Mimikatz attack that would failed without this domain admin impersonation.
+
+It can be used to dump hashes as we impersonate admin domain account.
+
+It can also be used to create a new domain user using net user /add for example
