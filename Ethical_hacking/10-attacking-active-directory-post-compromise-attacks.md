@@ -175,3 +175,7 @@ net group "Domain Admins" hawkeye /ADD /DOMAIN // user is added to domain group
 Can check user is properly added using :
 secretsdump.py MARVEL.local/hawkeye:'Password1@'@192.168.138.136
 
+## Token Impersonation Mitigation
+
+- Limit user/group token creation permission
+- Local admin restrictions
