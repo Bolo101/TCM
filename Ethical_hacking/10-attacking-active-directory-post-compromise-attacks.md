@@ -233,3 +233,16 @@ sekurlsa:: // show all available features
 sekurlsa::logonPasswords
 
 Using this option we get a clear password for the networkn share auomatic connection
+
+## Post-Compromise Attack Strategy
+
+Now we have an account : 
+
+- Kerberoasting
+- Secretsdump
+- Pass the hash/password
+
+If not working :
+- Bloodhound
+- Look for old vulnerabilities
+- Think outside the box
