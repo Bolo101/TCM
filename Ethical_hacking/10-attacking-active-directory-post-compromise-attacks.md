@@ -212,3 +212,8 @@ These credentials were encrypted and places in a "cPassword". Key got released a
 In some filses if we find cPassword field (xml), use gpp-decrypt tool
 
 Mitigation is to patch (KB2962486) and elete the old GPP XML
+
+## Mimikatz Overview
+
+Tool used to view and steal credentials, generate Kerberos tickets
+Dump credentials stored in memory.
