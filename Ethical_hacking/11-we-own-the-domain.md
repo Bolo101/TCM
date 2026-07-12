@@ -20,3 +20,12 @@ Now  extract NT hash, can use Excel to split using delimeter
 Copy list in a text file
 
 hashcat -m 1000 ntds.txt /usr/share/wordlist/rockyou.txt
+
+## Golden Ticket Attacks Overview
+
+When we compromise the krbtgt account we own the domain
+We can request access to any resource or system on the domain
+
+Using Mimikatz in privilege debug
+privilege::debug 
+We can attack to get a Golden ticket giving us access to the whole domain
