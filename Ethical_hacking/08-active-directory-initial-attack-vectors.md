@@ -406,7 +406,7 @@ sessions -i 1
 
 **What is Pass-the-Hash?**
 
-**Pass-the-Hash** allows you to authenticate using a password hash instead of the actual password. This works because Windows stores NTLM hashes and uses them for authentication.
+**Pass-the-Hash** allows you to authenticate using a password hash instead of the actual password. This works because Windows stores NTLM hashes and uses them for authentication. Only works with NTLM hash (LM:NT_hash)
 
 **Using Hash with Metasploit:**
 
