@@ -717,20 +717,3 @@ Check for default credentials on:
 | **LDAP** | Lightweight Directory Access Protocol - directory service protocol |
 | **Passback Attack** | Attack exploiting device authentication weaknesses |
 | **Enterprise Admins** | Highest privilege group in Active Directory forest |
-
----
-
-## Important Security Notes
-
-⚠️ **WARNING:** These techniques are for educational purposes only. Never:
-- Use these attacks on networks you don't own or have explicit permission to test
-- Attack systems without proper authorization
-- Share captured credentials or hashes
-- Use these techniques for malicious purposes
-
-✅ **Best Practices:**
-- Always get written permission before testing
-- Document all findings and recommendations
-- Test in isolated lab environments first
-- Follow responsible disclosure guidelines
-- Implement proper defenses in production environments
