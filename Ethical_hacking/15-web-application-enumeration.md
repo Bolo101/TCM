@@ -95,3 +95,12 @@ echo "Probing for alive domains"
 cat $url/recon/final.txt | httprobe -s -p https:443 | sed 's/https\?:\/\///' | tr -d ':443' >> $url/recon/alive.txt
 ```
 
+## Gowitness
+
+Follow instal from Sensepost Github repo
+
+First :
+go get -u gorm.io/gorm
+Follow rest of instructions
+
+gowitness single https://tesla.com //screenshots folder appears in running directory
